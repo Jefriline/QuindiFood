@@ -11,9 +11,3 @@ class UserService {
 }
 
 export default UserService;
-
-
-interface RegisterUser {
-    username: string;
-    password: string;
-}

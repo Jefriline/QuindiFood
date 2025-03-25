@@ -20,4 +20,4 @@ let registerUser = async (req: Request, res: Response) => {
   }
 
   
-  export default registerUser;
+export default registerUser;

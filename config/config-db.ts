@@ -1,15 +1,15 @@
-import mysql from 'mysql2';
+import { Pool } from 'pg';
 import dotenv from "dotenv";
 dotenv.config();
 
-
-const db = mysql.createPool({
+const db = new Pool({
     host: process.env.DB_HOST,
     user: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
-    connectionLimit: 10,
-    queueLimit: 0
-  });
-  
-export default db.promise()
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+});
+
+
+export default db;
