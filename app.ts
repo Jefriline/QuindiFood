@@ -2,22 +2,19 @@ import express from 'express';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import userRoutes  from './routes/UserRoutes/userRoutes';
+import testRoutes from './test/testRoutes';
 
 dotenv.config();
 
-
 const app = express().use(bodyParser.json());
-
-
 
 app.get('/', (req, res) => {
   res.send('¡QuindiFood está funcionando! ');
 });
 
- // routes
+// routes
 app.use('/user', userRoutes);
-
-
+app.use('/test', testRoutes);
 
 const PORT = process.env.PORT || 10101;
 
