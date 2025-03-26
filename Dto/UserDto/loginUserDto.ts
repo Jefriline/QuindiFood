@@ -1,13 +1,10 @@
-class Loginuser{
+class LoginUser {
     private _email: string;
-    private _password: string;
+    private _contraseña: string;
 
-    constructor(
-        email: string, 
-        password: string
-    ) {
+    constructor(email: string, contraseña: string) {
         this._email = email;
-        this._password = password;
+        this._contraseña = contraseña;
     }
 
     // Getters
@@ -15,8 +12,8 @@ class Loginuser{
         return this._email;
     }
 
-    get password(): string {
-        return this._password;
+    get contraseña(): string {
+        return this._contraseña;
     }
 
     // Setters
@@ -24,8 +21,9 @@ class Loginuser{
         this._email = email;
     }
 
-    set password(password: string) {
-        this._password = password;
+    set contraseña(contraseña: string) {
+        this._contraseña = contraseña;
     }
 }
-export default Loginuser;
+
+export default LoginUser;

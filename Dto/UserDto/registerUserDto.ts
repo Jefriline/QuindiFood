@@ -1,42 +1,39 @@
 class RegisterUser {
-    private _name: string;
+    private _nombre: string;
     private _email: string;
-    private _password: string;
+    private _contraseña: string;
 
-    constructor(name: string, email: string, password: string) {
-        this._name = name;
+    constructor(nombre: string, email: string, contraseña: string) {
+        this._nombre = nombre;
         this._email = email;
-        this._password = password;
+        this._contraseña = contraseña;
     }
 
     // Getters
-    get name(): string {
-        return this._name;
+    get nombre(): string {
+        return this._nombre;
     }
 
     get email(): string {
         return this._email;
     }
 
-    get password(): string {
-        return this._password;
+    get contraseña(): string {
+        return this._contraseña;
     }
 
     // Setters
-    set name(name: string) {
-        this._name = name;
+    set nombre(nombre: string) {
+        this._nombre = nombre;
     }
 
     set email(email: string) {
         this._email = email;
     }
 
-    set password(password: string) {
-        this._password = password;
+    set contraseña(contraseña: string) {
+        this._contraseña = contraseña;
     }
 }
 
-
 export default RegisterUser;
-
-//bro mire repositories, routes y services, toca mirar bien porque hay cosas muy raras, ta bien bro :( 
