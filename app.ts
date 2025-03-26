@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import userRoutes  from './routes/UserRoutes/userRoutes';
 import testRoutes from './test/testRoutes';
+import establecimientoRoutes from './routes/EstablecimientoRoutes/establecimientoRoutes';
+import { escapeLiteral } from 'pg';
 
 dotenv.config();
 
@@ -15,6 +17,7 @@ app.get('/', (req, res) => {
 // routes
 app.use('/user', userRoutes);
 app.use('/test', testRoutes);
+app.use('/establecimiento', establecimientoRoutes);
 
 const PORT = process.env.PORT || 10101;
 

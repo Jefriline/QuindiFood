@@ -12,5 +12,4 @@ const db = new Pool({
     connectionTimeoutMillis: 2000,
 });
 
-
 export default db;
