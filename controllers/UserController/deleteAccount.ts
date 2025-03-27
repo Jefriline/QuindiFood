@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import UserService from '../../services/userServices/UserService';
-import UpdateUserDto from '../../Dto/UserDto/updateUserDto';
 
 interface RequestWithUser extends Request {
     user?: {
@@ -8,7 +7,7 @@ interface RequestWithUser extends Request {
     };
 }
 
-let updateUser = async (req: RequestWithUser, res: Response) => {
+let deleteAccount = async (req: RequestWithUser, res: Response) => {
     try {
         if (!req.user || !req.user.id) {
             return res.status(401).json({
@@ -17,11 +16,8 @@ let updateUser = async (req: RequestWithUser, res: Response) => {
             });
         }
 
-        const { nombre, email, contrasena, descripcion } = req.body;
         const id = req.user.id;
-        
-        const updateDto = new UpdateUserDto(id, nombre, email, contrasena, descripcion);
-        const result = await UserService.update(updateDto);
+        const result = await UserService.delete(id);
         
         if (!result.success) {
             return res.status(400).json({ 
@@ -32,10 +28,10 @@ let updateUser = async (req: RequestWithUser, res: Response) => {
 
         return res.status(200).json({ 
             status: 'Éxito', 
-            message: result.message
+            message: 'Cuenta eliminada exitosamente'
         });
     } catch (error: any) {
-        console.error('Error al actualizar usuario:', error);
+        console.error('Error al eliminar cuenta:', error);
         return res.status(500).json({ 
             status: 'Error', 
             message: 'Error en el servidor', 
@@ -44,4 +40,4 @@ let updateUser = async (req: RequestWithUser, res: Response) => {
     }
 };
 
-export default updateUser; 
+export default deleteAccount; 

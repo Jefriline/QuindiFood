@@ -3,7 +3,6 @@ import registerUser from '../../controllers/UserController/registerUser';
 import loginUser from '../../controllers/UserController/loginUser';
 import userProfile from '../../controllers/UserController/profileUser';
 import registerValidator from "../../middleware/UserValidator/registerValidator";
-import userProfileMiddleware from "../../middleware/UserValidator/userProfileMiddleware";
 import loginValidator from "../../middleware/UserValidator/loginValidator";
 import registerAdmin from '../../controllers/UserController/registerAdmin';
 import adminRegisterValidator from "../../middleware/UserValidator/adminRegisterMiddleware";
@@ -11,6 +10,8 @@ import logoutUser from '../../controllers/UserController/logoutUser';
 import logoutValidator from "../../middleware/UserValidator/logoutValidator";
 import updateUserValidator from "../../middleware/UserValidator/updateUserValidator";
 import updateUser from "../../controllers/UserController/updateUser";
+import authMiddleware from "../../middleware/UserValidator/authMiddleware";
+import deleteAccount from "../../controllers/UserController/deleteAccount";
 
 const router = express.Router();
 
@@ -28,9 +29,8 @@ router.post('/login',
     loginUser
 );
 
-router.get('/profile/:id',
-    userProfileMiddleware.validatorProfile,
-    userProfileMiddleware.validator,
+router.get('/profile',
+    authMiddleware,
     userProfile
 );
 
@@ -47,10 +47,16 @@ router.post('/logout',
     logoutUser
 );
 
-router.put('/update/:id', 
+router.put('/update',
+    authMiddleware,
     updateUserValidator.validatorUpdateUser,
     updateUserValidator.validator,
     updateUser
+);
+
+router.delete('/delete-account',
+    authMiddleware,
+    deleteAccount
 );
 
 export default router; 

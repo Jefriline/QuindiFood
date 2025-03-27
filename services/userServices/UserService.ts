@@ -43,35 +43,82 @@ class UserService {
         return await UserRepository.addAdmin(adminToRegister);
     }
 
-    static async update(updateData: UpdateUserDto): Promise<boolean> {
-        
-            const user = await UserRepository.getById(updateData.id);
-            if (!user) return false;
-
-            // Si hay contraseña nueva, la hasheamos
-            if (updateData.contraseña) {
-                const salt = await bcrypt.genSalt(10);
-                updateData.contraseña = await bcrypt.hash(updateData.contraseña, salt);
-            }
-
-            // Si hay foto de perfil, la convertimos a BYTEA
-            if (updateData.foto_perfil && typeof updateData.foto_perfil === 'string') {
-                const imageBuffer = await this.convertImageToBuffer(updateData.foto_perfil);
-                updateData.foto_perfil = imageBuffer;
-            }
-
-            return await UserRepository.update(updateData);
-    }
-
-    private static async convertImageToBuffer(imagePath: string): Promise<Buffer> {
+    static async update(updateData: UpdateUserDto): Promise<{ success: boolean; message: string }> {
         try {
-            const imageData = await fs.readFile(imagePath);
-            return imageData;
+            // Verificar si el usuario existe
+            const userExists = await UserRepository.getById(updateData.id);
+            if (!userExists) {
+                return {
+                    success: false,
+                    message: `No se encontró un usuario con el ID ${updateData.id}`
+                };
+            }
+
+            // Verificar si el nuevo email ya existe (solo si es diferente al email actual)
+            if (updateData.email !== userExists.email) {
+                const emailExists = await UserRepository.emailExists(updateData.email);
+                if (emailExists) {
+                    return {
+                        success: false,
+                        message: 'El email ya está registrado por otro usuario'
+                    };
+                }
+            }
+
+            if (updateData.contrasena) {
+                const salt = await bcrypt.genSalt(10);
+                updateData.contrasena = await bcrypt.hash(updateData.contrasena, salt);
+            }
+
+            const updated = await UserRepository.update(updateData);
+
+            if (!updated) {
+                return {
+                    success: false,
+                    message: 'Error al actualizar el usuario en la base de datos'
+                };
+            }
+
+            return {
+                success: true,
+                message: 'Usuario actualizado exitosamente'
+            };
         } catch (error) {
-            console.error('Error al convertir imagen a buffer:', error);
+            console.error('Error en UserService.update:', error);
             throw error;
         }
     }
+
+    static async delete(id: number): Promise<{ success: boolean; message: string }> {
+        try {
+            // Verificar si el usuario existe
+            const userExists = await UserRepository.getById(id);
+            if (!userExists) {
+                return {
+                    success: false,
+                    message: `No se encontró un usuario con el ID ${id}`
+                };
+            }
+
+            const deleted = await UserRepository.delete(id);
+
+            if (!deleted) {
+                return {
+                    success: false,
+                    message: 'Error al eliminar el usuario'
+                };
+            }
+
+            return {
+                success: true,
+                message: 'Usuario eliminado exitosamente'
+            };
+        } catch (error) {
+            console.error('Error en UserService.delete:', error);
+            throw error;
+        }
+    }
+
 }
 
 export default UserService;

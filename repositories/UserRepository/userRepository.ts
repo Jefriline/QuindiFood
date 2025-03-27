@@ -29,19 +29,18 @@ class UserRepository {
 
     // Primero insertamos en usuario_general
     const sql =
-      "INSERT INTO usuario_general (nombre, email, contrasena, estado, rol, fecha_creacion_perf) VALUES ($1, $2, $3, $4, $5, (NOW() AT TIME ZONE 'America/Bogota')) RETURNING id_usuario";
+      "INSERT INTO usuario_general (nombre, email, contrasena, estado, fecha_creacion_perf) VALUES ($1, $2, $3, $4, (NOW() AT TIME ZONE 'America/Bogota')) RETURNING id_usuario";
     const values = [
       user.nombre,
       user.email,
       user.contraseña,
-      "Activo",
-      "ADMIN",
+      "Activo"
     ];
     const result = await db.query(sql, values);
 
     // Luego insertamos en la tabla administrador
     const userId = result.rows[0].id_usuario;
-    const sqlAdmin = "INSERT INTO administrador (id_administrador) VALUES ($1)";
+    const sqlAdmin = "INSERT INTO administrador (id_admin) VALUES ($1)";
     await db.query(sqlAdmin, [userId]);
 
     return userId;
@@ -92,7 +91,7 @@ class UserRepository {
   // Método para obtener usuario por ID
   static async getById(id: number) {
     const sql =
-      "SELECT id_usuario, nombre, email FROM usuario_general WHERE id_usuario = $1";
+      "SELECT id_usuario, nombre, email, descripcion, fecha_creacion_perf FROM usuario_general WHERE id_usuario = $1";
     const values = [id];
     const result = await db.query(sql, values);
 
@@ -130,28 +129,41 @@ class UserRepository {
   }
 
   static async update(updateData: UpdateUserDto): Promise<boolean> {
-    const sql = `
-                UPDATE usuario_general 
-                SET 
-                    nombre = COALESCE($1, nombre),
-                    email = COALESCE($2, email),
-                    contrasena = COALESCE($3, contrasena),
-                    descripcion = COALESCE($4, descripcion),
-                    foto_perfil = COALESCE($5, foto_perfil)
-                WHERE id_usuario = $6
-                RETURNING id_usuario
+    try {
+      const sql = `
+                UPDATE usuario_general
+                SET nombre = $1,
+                    email = $2,
+                    contrasena = $3,
+                    descripcion = $4
+                WHERE id_usuario = $5
             `;
 
-    const result = await db.query(sql, [
-      updateData.nombre,
-      updateData.email,
-      updateData.contraseña,
-      updateData.descripcion,
-      updateData.foto_perfil,
-      updateData.id,
-    ]);
+      const result = await db.query(sql, [
+        updateData.nombre,
+        updateData.email,
+        updateData.contrasena,
+        updateData.descripcion,
+        updateData.id
+      ]);
 
-    return result.rows.length > 0;
+      return (result?.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error('Error en UserRepository.update:', error);
+      throw error;
+    }
+  }
+
+  static async delete(id: number): Promise<boolean> {
+
+      const sql = `
+                DELETE FROM usuario_general
+                WHERE id_usuario = $1
+            `;
+
+      const result = await db.query(sql, [id]);
+      return (result?.rowCount ?? 0) > 0;
+    
   }
 }
 

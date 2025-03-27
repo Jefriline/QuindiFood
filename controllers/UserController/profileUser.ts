@@ -2,26 +2,42 @@ import { Request, Response } from "express";
 import UserService from "../../services/userServices/UserService";
 import UserProfileDto from "../../Dto/UserDto/userProfileDto";
 
-const userProfile = async (req: Request, res: Response) => {
-    try {
-        const id = parseInt(req.params.id);
-        const user = await UserService.getById(new UserProfileDto(id));
+interface RequestWithUser extends Request {
+    user?: {
+        id: number;
+    };
+}
 
-        if (!user) {
-            return res.status(404).json({
-                status: 404,
-                error: 'Usuario no encontrado'
+const userProfile = async (req: RequestWithUser, res: Response) => {
+    try {
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({
+                status: 'Error',
+                message: 'No se pudo obtener el ID del usuario del token'
             });
         }
 
+        const user = await UserService.getById(new UserProfileDto(req.user.id));
+
+        if (!user) {
+            return res.status(404).json({
+                status: 'Error',
+                message: 'Usuario no encontrado'
+            });
+        }
+
+        
+
         return res.status(200).json({
-            status: 200,
-            data: user
+            status: 'Éxito',
+            user
         });
     } catch (error: any) {
+        console.error('Error al obtener perfil:', error);
         return res.status(500).json({
-            status: 500,
-            error: 'Error al obtener el perfil del usuario'
+            status: 'Error',
+            message: 'Error en el servidor',
+            error: error.message
         });
     }
 };
