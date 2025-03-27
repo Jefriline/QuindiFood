@@ -130,28 +130,41 @@ class UserRepository {
   }
 
   static async update(updateData: UpdateUserDto): Promise<boolean> {
-    const sql = `
-                UPDATE usuario_general 
-                SET 
-                    nombre = COALESCE($1, nombre),
-                    email = COALESCE($2, email),
-                    contrasena = COALESCE($3, contrasena),
-                    descripcion = COALESCE($4, descripcion),
-                    foto_perfil = COALESCE($5, foto_perfil)
-                WHERE id_usuario = $6
-                RETURNING id_usuario
+    try {
+      const sql = `
+                UPDATE usuario_general
+                SET nombre = $1,
+                    email = $2,
+                    contrasena = $3,
+                    descripcion = $4
+                WHERE id_usuario = $5
             `;
 
-    const result = await db.query(sql, [
-      updateData.nombre,
-      updateData.email,
-      updateData.contraseña,
-      updateData.descripcion,
-      updateData.foto_perfil,
-      updateData.id,
-    ]);
+      const result = await db.query(sql, [
+        updateData.nombre,
+        updateData.email,
+        updateData.contrasena,
+        updateData.descripcion,
+        updateData.id
+      ]);
 
-    return result.rows.length > 0;
+      return (result?.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error('Error en UserRepository.update:', error);
+      throw error;
+    }
+  }
+
+  static async delete(id: number): Promise<boolean> {
+
+      const sql = `
+                DELETE FROM usuario_general
+                WHERE id_usuario = $1
+            `;
+
+      const result = await db.query(sql, [id]);
+      return (result?.rowCount ?? 0) > 0;
+    
   }
 }
 

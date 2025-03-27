@@ -11,6 +11,8 @@ import logoutUser from '../../controllers/UserController/logoutUser';
 import logoutValidator from "../../middleware/UserValidator/logoutValidator";
 import updateUserValidator from "../../middleware/UserValidator/updateUserValidator";
 import updateUser from "../../controllers/UserController/updateUser";
+import authMiddleware from "../../middleware/UserValidator/authMiddleware";
+import deleteAccount from "../../controllers/UserController/deleteAccount";
 
 const router = express.Router();
 
@@ -47,10 +49,16 @@ router.post('/logout',
     logoutUser
 );
 
-router.put('/update/:id', 
+router.put('/update',
+    authMiddleware,
     updateUserValidator.validatorUpdateUser,
     updateUserValidator.validator,
     updateUser
+);
+
+router.delete('/delete-account',
+    authMiddleware,
+    deleteAccount
 );
 
 export default router; 
