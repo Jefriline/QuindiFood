@@ -25,9 +25,11 @@ class EstablecimientoRepository {
         const result = await db.query(sqlEstablecimiento, valuesEstablecimiento);
         const idEstablecimiento = result.rows[0].id_establecimiento;
 
-        // Insertar multimedia
+        // Insertar multimedia como binario
         const sqlMultimedia = 'INSERT INTO multimedia_establecimiento (fk_id_establecimiento, multimedia) VALUES ($1, $2)';
-        await db.query(sqlMultimedia, [idEstablecimiento, multimedia.multimedia]);
+        for (const item of multimedia.multimedia) {
+            await db.query(sqlMultimedia, [idEstablecimiento, item]);
+        }
 
         // Insertar contactos
         const sqlContacto = 'INSERT INTO Contacto_establecimiento (fk_id_establecimiento, url) VALUES ($1, $2)';

@@ -1,15 +1,15 @@
 export class EstadoMembresiaDto {
-    private _estado: 'Activo' | 'Inactivo';
+    private _estado: string;
 
-    constructor(estado: 'Activo' | 'Inactivo') {
+    constructor(estado: string) {
         this._estado = estado;
     }
 
-    get estado(): 'Activo' | 'Inactivo' {
+    get estado(): string {
         return this._estado;
     }
 
-    set estado(estado: 'Activo' | 'Inactivo') {
+    set estado(estado: string) {
         this._estado = estado;
     }
 } 

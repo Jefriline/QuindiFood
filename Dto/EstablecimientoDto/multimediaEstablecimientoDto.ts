@@ -1,15 +1,15 @@
 export class MultimediaEstablecimientoDto {
-    private _multimedia: Buffer;
+    private _multimedia: string[];
 
-    constructor(multimedia: Buffer) {
+    constructor(multimedia: string[]) {
         this._multimedia = multimedia;
     }
 
-    get multimedia(): Buffer {
+    get multimedia(): string[] {
         return this._multimedia;
     }
 
-    set multimedia(multimedia: Buffer) {
+    set multimedia(multimedia: string[]) {
         this._multimedia = multimedia;
     }
 } 

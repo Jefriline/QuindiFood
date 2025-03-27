@@ -4,10 +4,11 @@ import { ContactoEstablecimientoDto } from '../../Dto/EstablecimientoDto/contact
 import { DocumentacionDto } from '../../Dto/EstablecimientoDto/documentacionDto';
 import { EstadoMembresiaDto } from '../../Dto/EstablecimientoDto/estadoMembresiaDto';
 import EstablecimientoRepository from '../../repositories/EstablecimientoRepository/establecimientoRepository';
-import generateHash from '../../Helpers/Hash/generateHash';
+import ListEstablecimientoRepository from '../../repositories/EstablecimientoRepository/listEstablecimientoRepository';
+import { ListEstablecimientoDto } from '../../Dto/EstablecimientoDto/listEstablecimientoDto';
 
-class EstablecimientoService {
-    async add(
+export class EstablecimientoService {
+    static async add(
         establecimiento: EstablecimientoDto,
         multimedia: MultimediaEstablecimientoDto,
         contactos: ContactoEstablecimientoDto[],
@@ -15,43 +16,37 @@ class EstablecimientoService {
         estadoMembresia: EstadoMembresiaDto
     ) {
         try {
-            // Hashear los documentos
-            const registroMercantilHash = await generateHash(documentacion.registro_mercantil.toString('base64'));
-            const rutHash = await generateHash(documentacion.rut.toString('base64'));
-            const certificadoSaludHash = await generateHash(documentacion.certificado_salud.toString('base64'));
-            const registroInvimaHash = documentacion.registro_invima 
-                ? await generateHash(documentacion.registro_invima.toString('base64'))
-                : null;
-
-            // Crear un nuevo DTO de documentación con los hashes
-            const documentacionHash = new DocumentacionDto(
-                Buffer.from(registroMercantilHash),
-                Buffer.from(rutHash),
-                Buffer.from(certificadoSaludHash),
-                registroInvimaHash ? Buffer.from(registroInvimaHash) : undefined
-            );
-
-            // Hashear la multimedia
-            const multimediaHash = await generateHash(multimedia.multimedia.toString('base64'));
-
-            // Crear un nuevo DTO de multimedia con el hash
-            const multimediaHashDto = new MultimediaEstablecimientoDto(Buffer.from(multimediaHash));
-
-            // Guardar en la base de datos usando el repositorio
-            await EstablecimientoRepository.add(
+            console.log('Iniciando proceso de registro de establecimiento');
+            
+            const result = await EstablecimientoRepository.add(
                 establecimiento,
-                multimediaHashDto,
+                multimedia,
                 contactos,
-                documentacionHash,
+                documentacion,
                 estadoMembresia
             );
 
-            return true;
+            console.log('Guardado en base de datos exitoso');
+            console.log('Registro de establecimiento exitoso');
+            
+            return result;
         } catch (error) {
-            console.error('Error en EstablecimientoService.add:', error);
+            console.error('Error en el servicio al registrar establecimiento:', error);
+            throw error;
+        }
+    }
+
+    static async getAll(): Promise<ListEstablecimientoDto[]> {
+        try {
+            console.log('Iniciando proceso de obtención de establecimientos');
+            const establecimientos = await ListEstablecimientoRepository.getAll();
+            console.log('Establecimientos obtenidos exitosamente');
+            return establecimientos;
+        } catch (error) {
+            console.error('Error en el servicio al obtener establecimientos:', error);
             throw error;
         }
     }
 }
 
-export default new EstablecimientoService(); 
+export default EstablecimientoService; 
