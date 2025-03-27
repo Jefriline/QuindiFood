@@ -3,7 +3,6 @@ import registerUser from '../../controllers/UserController/registerUser';
 import loginUser from '../../controllers/UserController/loginUser';
 import userProfile from '../../controllers/UserController/profileUser';
 import registerValidator from "../../middleware/UserValidator/registerValidator";
-import userProfileMiddleware from "../../middleware/UserValidator/userProfileMiddleware";
 import loginValidator from "../../middleware/UserValidator/loginValidator";
 import registerAdmin from '../../controllers/UserController/registerAdmin';
 import adminRegisterValidator from "../../middleware/UserValidator/adminRegisterMiddleware";
@@ -30,9 +29,8 @@ router.post('/login',
     loginUser
 );
 
-router.get('/profile/:id',
-    userProfileMiddleware.validatorProfile,
-    userProfileMiddleware.validator,
+router.get('/profile',
+    authMiddleware,
     userProfile
 );
 

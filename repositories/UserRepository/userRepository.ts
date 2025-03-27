@@ -29,19 +29,18 @@ class UserRepository {
 
     // Primero insertamos en usuario_general
     const sql =
-      "INSERT INTO usuario_general (nombre, email, contrasena, estado, rol, fecha_creacion_perf) VALUES ($1, $2, $3, $4, $5, (NOW() AT TIME ZONE 'America/Bogota')) RETURNING id_usuario";
+      "INSERT INTO usuario_general (nombre, email, contrasena, estado, fecha_creacion_perf) VALUES ($1, $2, $3, $4, (NOW() AT TIME ZONE 'America/Bogota')) RETURNING id_usuario";
     const values = [
       user.nombre,
       user.email,
       user.contraseña,
-      "Activo",
-      "ADMIN",
+      "Activo"
     ];
     const result = await db.query(sql, values);
 
     // Luego insertamos en la tabla administrador
     const userId = result.rows[0].id_usuario;
-    const sqlAdmin = "INSERT INTO administrador (id_administrador) VALUES ($1)";
+    const sqlAdmin = "INSERT INTO administrador (id_admin) VALUES ($1)";
     await db.query(sqlAdmin, [userId]);
 
     return userId;
@@ -92,7 +91,7 @@ class UserRepository {
   // Método para obtener usuario por ID
   static async getById(id: number) {
     const sql =
-      "SELECT id_usuario, nombre, email FROM usuario_general WHERE id_usuario = $1";
+      "SELECT id_usuario, nombre, email, descripcion, fecha_creacion_perf FROM usuario_general WHERE id_usuario = $1";
     const values = [id];
     const result = await db.query(sql, values);
 
