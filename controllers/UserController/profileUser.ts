@@ -2,20 +2,28 @@ import { Request, Response } from "express";
 import UserService from "../../services/userServices/UserService";
 import UserProfileDto from "../../Dto/UserDto/userProfileDto";
 
-let userProfile = async (req: Request, res: Response) => {
+const userProfile = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = parseInt(req.params.id);
+        const user = await UserService.getById(new UserProfileDto(id));
 
-        const profile = new UserProfileDto(parseInt(id));
-        
-        const user = await UserService.getById(profile.id);
+        if (!user) {
+            return res.status(404).json({
+                status: 404,
+                error: 'Usuario no encontrado'
+            });
+        }
+
         return res.status(200).json({
-            status: 'success',
+            status: 200,
             data: user
         });
     } catch (error: any) {
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({
+            status: 500,
+            error: 'Error al obtener el perfil del usuario'
+        });
     }
-}
+};
 
 export default userProfile; 

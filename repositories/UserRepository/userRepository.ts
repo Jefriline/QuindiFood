@@ -1,10 +1,11 @@
 import db from '../../config/config-db';
 import LoginUser from '../../Dto/UserDto/loginUserDto';
 import RegisterUser from '../../Dto/UserDto/registerUserDto';
+import RegisterAdmin from '../../Dto/UserDto/registerAdminDto';
 import bcrypt from 'bcryptjs';
 
 class UserRepository {
-    // Método para registrar usuario
+    
     static async add(user: RegisterUser) {
         // Primero insertamos en usuario_general
         const sql = 'INSERT INTO usuario_general (nombre, email, contrasena, estado, fecha_creacion_perf) VALUES ($1, $2, $3, $4, (NOW() AT TIME ZONE \'America/Bogota\')) RETURNING id_usuario';
@@ -15,6 +16,25 @@ class UserRepository {
         const userId = result.rows[0].id_usuario;
         const sqlCliente = 'INSERT INTO cliente (id_cliente) VALUES ($1)';
         await db.query(sqlCliente, [userId]);
+        
+        return userId;
+    }
+
+    static async addAdmin(user: RegisterAdmin) {
+        // Verificar el código de administrador
+        if (user.codigoAdmin !== process.env.KEY_ADMIN) {
+            throw new Error('Código de administrador inválido');
+        }
+
+        // Primero insertamos en usuario_general
+        const sql = 'INSERT INTO usuario_general (nombre, email, contrasena, estado, rol, fecha_creacion_perf) VALUES ($1, $2, $3, $4, $5, (NOW() AT TIME ZONE \'America/Bogota\')) RETURNING id_usuario';
+        const values = [user.nombre, user.email, user.contraseña, 'Activo', 'ADMIN'];
+        const result = await db.query(sql, values);
+        
+        // Luego insertamos en la tabla administrador
+        const userId = result.rows[0].id_usuario;
+        const sqlAdmin = 'INSERT INTO administrador (id_administrador) VALUES ($1)';
+        await db.query(sqlAdmin, [userId]);
         
         return userId;
     }
@@ -41,8 +61,8 @@ class UserRepository {
 
                 return { 
                     logged: true, 
-                    status: "Autenticación exitosa", 
-                    id: result.rows[0].id_usuario, 
+                    status: "Autenticación exitosa",
+                    id: result.rows[0].id_usuario,
                     role: role
                 };
             }
@@ -53,13 +73,31 @@ class UserRepository {
 
     // Método para obtener usuario por ID
     static async getById(id: number) {
-        const sql = 'SELECT id_usuario, nombre, email, estado, foto_perfil, descripcion, fecha_creacion_perf FROM usuario_general WHERE id_usuario = $1';
+        const sql = 'SELECT id_usuario, nombre, email FROM usuario_general WHERE id_usuario = $1';
         const values = [id];
         const result = await db.query(sql, values);
-        return result.rows[0];
+
+        if (result.rows.length > 0) {
+            // Verificar el rol del usuario
+            const adminCheck = await db.query('SELECT * FROM administrador WHERE id_admin = $1', [id]);
+            const propietarioCheck = await db.query('SELECT * FROM propietario WHERE id_propietario = $1', [id]);
+            
+            let role = 'CLIENTE';
+            if (adminCheck.rows.length > 0) {
+                role = 'ADMIN';
+            } else if (propietarioCheck.rows.length > 0) {
+                role = 'PROPIETARIO';
+            }
+
+            return {
+                ...result.rows[0],
+                role: role
+            };
+        }
+        return null;
     }
 
-    static async emailExists(email: string): Promise<boolean> {
+    static async emailExists(email: string) {
         const sql = 'SELECT * FROM usuario_general WHERE email = $1';
         const values = [email];
         const result = await db.query(sql, values);
