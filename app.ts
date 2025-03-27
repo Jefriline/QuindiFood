@@ -1,8 +1,11 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
-import userRoutes from './routes/UserRoutes/userRoutes';
 
+
+
+import userRoutes from './routes/UserRoutes/userRoutes';
+import establecimientoRoutes from './routes/EstablecimientoRoutes/establecimientoRoutes';
 
 dotenv.config();
 
@@ -15,6 +18,9 @@ app.get('/', (req, res) => {
 // routes
 app.use('/user', userRoutes);
 
+
+
+app.use('/establecimiento', establecimientoRoutes);
 
 const PORT = process.env.PORT || 10101;
 
