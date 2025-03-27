@@ -7,6 +7,10 @@ import userProfileMiddleware from "../../middleware/UserValidator/userProfileMid
 import loginValidator from "../../middleware/UserValidator/loginValidator";
 import registerAdmin from '../../controllers/UserController/registerAdmin';
 import adminRegisterValidator from "../../middleware/UserValidator/adminRegisterMiddleware";
+import logoutUser from '../../controllers/UserController/logoutUser';
+import logoutValidator from "../../middleware/UserValidator/logoutValidator";
+import updateUserValidator from "../../middleware/UserValidator/updateUserValidator";
+import updateUser from "../../controllers/UserController/updateUser";
 
 const router = express.Router();
 
@@ -35,6 +39,18 @@ router.post('/x7k9q2p5m3n8r4t6',
     adminRegisterValidator.validatorAdminRegister,
     adminRegisterValidator.validator,
     registerAdmin
+);
+
+// Ruta para logout
+router.post('/logout',
+    logoutValidator.validatorLogout,
+    logoutUser
+);
+
+router.put('/update/:id', 
+    updateUserValidator.validatorUpdateUser,
+    updateUserValidator.validator,
+    updateUser
 );
 
 export default router; 
