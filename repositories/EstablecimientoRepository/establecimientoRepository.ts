@@ -49,6 +49,33 @@ class EstablecimientoRepository {
 
         return result.rows[0];
     }
+
+    static async searchByName(nombre: string) {
+        const sql = `
+            SELECT 
+                e.id_establecimiento,
+                e.nombre,
+                e.ubicacion,
+                e.telefono,
+                e.descripcion,
+                e.estado,
+                array_agg(convert_from(me.multimedia, 'UTF8')) as multimedia,
+                array_agg(DISTINCT ce.url) as contactos
+            FROM establecimiento e
+            LEFT JOIN multimedia_establecimiento me ON e.id_establecimiento = me.fk_id_establecimiento
+            LEFT JOIN contacto_establecimiento ce ON e.id_establecimiento = ce.fk_id_establecimiento
+            WHERE LOWER(e.nombre) = LOWER($1)
+            GROUP BY e.id_establecimiento, e.nombre, e.ubicacion, e.telefono, e.descripcion, e.estado
+        `;
+        
+        const result = await db.query(sql, [nombre]);
+        
+        return result.rows.map(row => ({
+            ...row,
+            multimedia: row.multimedia ? row.multimedia.filter((item: any) => item !== null) : [],
+            contactos: row.contactos ? row.contactos.filter((item: any) => item !== null) : []
+        }));
+    }
 }
 
 export default EstablecimientoRepository; 

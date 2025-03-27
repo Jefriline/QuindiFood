@@ -1,8 +1,7 @@
 import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
-
-
 
 import userRoutes from './routes/UserRoutes/userRoutes';
 import establecimientoRoutes from './routes/EstablecimientoRoutes/establecimientoRoutes';
@@ -11,15 +10,14 @@ dotenv.config();
 
 const app = express().use(bodyParser.json());
 
+app.use(cors());
+
 app.get('/', (req, res) => {
   res.send('¡QuindiFood está funcionando! ');
 });
 
 // routes
 app.use('/user', userRoutes);
-
-
-
 app.use('/establecimiento', establecimientoRoutes);
 
 const PORT = process.env.PORT || 10101;
