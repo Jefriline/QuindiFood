@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import FavoritosService from '../../services/FavoritosService/favoritosService';
-import { FavoritosDto } from '../../Dto/FavoritosDto/favoritosDto';
+import FavoritosService from '../../services/EstablecimientoService/favoritosService';
+import { FavoritosDto } from '../../Dto/EstablecimientoDto/favoritosDto';
 
 const addFavorito = async (req: Request, res: Response) => {
     try {

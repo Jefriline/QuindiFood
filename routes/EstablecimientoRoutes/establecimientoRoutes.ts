@@ -3,7 +3,7 @@ import registerEstablecimiento from '../../controllers/EstablecimientoController
 import listEstablecimientos from '../../controllers/EstablecimientoController/listEstablecimiento';
 import getDetalleEstablecimiento from '../../controllers/EstablecimientoController/detalleEstablecimiento';
 import establecimientoValidator from '../../middleware/EstablecimientoValidator/establecimientoValidator';
-import addFavorito from '../../controllers/FavoritosController/addFavorito';
+import addFavorito from '../../controllers/EstablecimientoController/addFavorito';
 import { verifyToken } from '../../middleware/verifyToken/verifyToken';
 import searchEstablecimiento from '../../controllers/EstablecimientoController/searchEstablecimiento';
 

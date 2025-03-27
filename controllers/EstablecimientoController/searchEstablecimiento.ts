@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import SearchEstablecimientoService from '../../services/establecimientoServices/searchEstablecimientoService';
+import SearchEstablecimientoService from '../../services/EstablecimientoService/searchEstablecimientoService';
 import SearchEstablecimientoDto from '../../Dto/EstablecimientoDto/searchEstablecimientoDto';
 
 const searchEstablecimiento = async (req: Request, res: Response) => {
