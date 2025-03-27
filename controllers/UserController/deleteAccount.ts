@@ -4,6 +4,7 @@ import UserService from '../../services/userServices/UserService';
 interface RequestWithUser extends Request {
     user?: {
         id: number;
+        role: string;
     };
 }
 

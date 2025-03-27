@@ -5,6 +5,7 @@ import UserProfileDto from "../../Dto/UserDto/userProfileDto";
 interface RequestWithUser extends Request {
     user?: {
         id: number;
+        role: string;
     };
 }
 

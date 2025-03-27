@@ -5,6 +5,7 @@ import UpdateUserDto from '../../Dto/UserDto/updateUserDto';
 interface RequestWithUser extends Request {
     user?: {
         id: number;
+        role: string;
     };
 }
 
