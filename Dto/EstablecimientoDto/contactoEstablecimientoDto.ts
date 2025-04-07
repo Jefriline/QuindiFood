@@ -1,4 +1,4 @@
-export class ContactoEstablecimientoDto {
+export class ContactoEstablecimientoDto { //kjfdjkfjkdk
     private _url: string;
 
     constructor(url: string) {
