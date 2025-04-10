@@ -28,32 +28,37 @@ let establecimientoValidatorParams = [
         .isLength({ min: 10, max: 200 })
         .withMessage('La descripción debe tener entre 10 y 200 caracteres.'),
 
-    check('contactos')
-        .optional()
-        .isArray()
-        .withMessage('Los contactos deben ser un array.')
-        .custom((value) => {
-            if (value && value.length > 0) {
-                for (const url of value) {
-                    if (!url.match(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)) {
-                        throw new Error('URL inválida en los contactos');
-                    }
-                }
+    check('multimedia')
+        .custom((value, { req }) => {
+            if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+                throw new Error('Debe subir al menos una imagen');
             }
             return true;
         }),
 
     check('registro_mercantil')
-        .notEmpty()
-        .withMessage('El registro mercantil es obligatorio.'),
+        .custom((value, { req }) => {
+            if (!req.files || !req.files.find(f => f.fieldname === 'registro_mercantil')) {
+                throw new Error('El registro mercantil es obligatorio');
+            }
+            return true;
+        }),
 
     check('rut')
-        .notEmpty()
-        .withMessage('El RUT es obligatorio.'),
+        .custom((value, { req }) => {
+            if (!req.files || !req.files.find(f => f.fieldname === 'rut')) {
+                throw new Error('El RUT es obligatorio');
+            }
+            return true;
+        }),
 
     check('certificado_salud')
-        .notEmpty()
-        .withMessage('El certificado de salud es obligatorio.')
+        .custom((value, { req }) => {
+            if (!req.files || !req.files.find(f => f.fieldname === 'certificado_salud')) {
+                throw new Error('El certificado de salud es obligatorio');
+            }
+            return true;
+        })
 ];
 
 let idValidator = [

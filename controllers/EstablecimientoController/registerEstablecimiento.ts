@@ -13,14 +13,10 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
             ubicacion,
             telefono,
             descripcion,
-            multimedia,
-            contactos,
-            registro_mercantil,
-            rut,
-            certificado_salud,
-            registro_invima,
             estadoMembresia
         } = req.body;
+
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
         // Crear el DTO principal con solo la información básica
         const establecimiento = new EstablecimientoDto(
@@ -30,22 +26,26 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
             descripcion
         );
 
-        // Crear los DTOs específicos
-        const multimediaDto = new MultimediaEstablecimientoDto(multimedia);
-        const contactosDto = contactos.map((url: string) => new ContactoEstablecimientoDto(url));
+        // Procesar archivos multimedia
+        const multimediaFiles = files['multimedia'] || [];
+        const multimediaBuffers = multimediaFiles.map(file => file.buffer);
+        const multimediaDto = new MultimediaEstablecimientoDto(multimediaBuffers);
+
+        // Procesar documentación
         const documentacionDto = new DocumentacionDto(
-            registro_mercantil,
-            rut,
-            certificado_salud,
-            registro_invima
+            files['registro_mercantil']?.[0]?.buffer.toString('base64') || '',
+            files['rut']?.[0]?.buffer.toString('base64') || '',
+            files['certificado_salud']?.[0]?.buffer.toString('base64') || '',
+            files['registro_invima']?.[0]?.buffer.toString('base64')
         );
-        const estadoMembresiaDto = new EstadoMembresiaDto(estadoMembresia);
+
+        const estadoMembresiaDto = new EstadoMembresiaDto(estadoMembresia || 'Activo');
 
         // Enviar todos los DTOs al servicio
         await EstablecimientoService.add(
             establecimiento,
             multimediaDto,
-            contactosDto,
+            [], // No usamos contactos por ahora
             documentacionDto,
             estadoMembresiaDto
         );
