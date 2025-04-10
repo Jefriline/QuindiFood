@@ -35,6 +35,6 @@ export class ImageRepository {
             RETURNING id_archivo
         `;
         const result = await this.pool.query(query, [imageId]);
-        return result.rowCount > 0;
+        return result.rowCount ? result.rowCount > 0 : false;
     }
 } 

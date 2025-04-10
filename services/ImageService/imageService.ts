@@ -15,7 +15,8 @@ export class ImageService {
     async getImagesByEstablishment(establishmentId: number): Promise<ImageResponseDto[]> {
         const images = await this.imageRepository.getImagesByEstablishment(establishmentId);
         return images.map(image => ({
-            ...image,
+            id_archivo: image.id_archivo || 0,
+            fk_id_establecimiento: image.fk_id_establecimiento,
             multimedia: image.multimedia.toString('base64')
         }));
     }
