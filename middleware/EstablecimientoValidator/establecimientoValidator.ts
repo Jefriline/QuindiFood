@@ -38,7 +38,7 @@ let establecimientoValidatorParams = [
 
     check('registro_mercantil')
         .custom((value, { req }) => {
-            if (!req.files || !req.files.find(f => f.fieldname === 'registro_mercantil')) {
+            if (!req.files || !req.files.find((f: any) => f.fieldname === 'registro_mercantil')) {
                 throw new Error('El registro mercantil es obligatorio');
             }
             return true;
@@ -46,7 +46,7 @@ let establecimientoValidatorParams = [
 
     check('rut')
         .custom((value, { req }) => {
-            if (!req.files || !req.files.find(f => f.fieldname === 'rut')) {
+            if (!req.files || !req.files.find((f: any) => f.fieldname === 'rut')) {
                 throw new Error('El RUT es obligatorio');
             }
             return true;
@@ -54,7 +54,7 @@ let establecimientoValidatorParams = [
 
     check('certificado_salud')
         .custom((value, { req }) => {
-            if (!req.files || !req.files.find(f => f.fieldname === 'certificado_salud')) {
+            if (!req.files || !req.files.find((f: any) => f.fieldname === 'certificado_salud')) {
                 throw new Error('El certificado de salud es obligatorio');
             }
             return true;
