@@ -7,6 +7,7 @@ import generateHash from '../../Helpers/Hash/generateHash';
 import bcrypt from 'bcryptjs';
 import fs from 'fs/promises';
 import UpdateUserDto from '../../Dto/UserDto/updateUserDto';
+import ToggleUserStatusDto from '../../Dto/UserDto/toggleUserStatusDto';
 
 class UserService {
     static async register(ru: RegisterUser) {
@@ -115,6 +116,44 @@ class UserService {
             };
         } catch (error) {
             console.error('Error en UserService.delete:', error);
+            throw error;
+        }
+    }
+
+    static async toggleUserStatus(toggleDto: ToggleUserStatusDto): Promise<{ success: boolean; message: string }> {
+        try {
+            // Verificar si el usuario existe
+            const userExists = await UserRepository.getById(toggleDto.id_usuario);
+            if (!userExists) {
+                return {
+                    success: false,
+                    message: `No se encontró un usuario con el ID ${toggleDto.id_usuario}`
+                };
+            }
+
+            // Verificar que el estado sea válido
+            if (toggleDto.estado !== 'Activo' && toggleDto.estado !== 'Inactivo') {
+                return {
+                    success: false,
+                    message: 'El estado debe ser "Activo" o "Inactivo"'
+                };
+            }
+
+            const updated = await UserRepository.toggleUserStatus(toggleDto);
+
+            if (!updated) {
+                return {
+                    success: false,
+                    message: 'Error al actualizar el estado del usuario'
+                };
+            }
+
+            return {
+                success: true,
+                message: `Estado del usuario actualizado exitosamente a ${toggleDto.estado}`
+            };
+        } catch (error) {
+            console.error('Error en UserService.toggleUserStatus:', error);
             throw error;
         }
     }

@@ -4,6 +4,7 @@ import RegisterUser from "../../Dto/UserDto/registerUserDto";
 import RegisterAdmin from "../../Dto/UserDto/registerAdminDto";
 import bcrypt from "bcryptjs";
 import UpdateUserDto from "../../Dto/UserDto/updateUserDto";
+import ToggleUserStatusDto from '../../Dto/UserDto/toggleUserStatusDto';
 
 class UserRepository {
   static async add(user: RegisterUser) {
@@ -164,6 +165,22 @@ class UserRepository {
       const result = await db.query(sql, [id]);
       return (result?.rowCount ?? 0) > 0;
     
+  }
+
+  static async toggleUserStatus(toggleDto: ToggleUserStatusDto): Promise<boolean> {
+    try {
+      const sql = `
+        UPDATE usuario_general
+        SET estado = $1
+        WHERE id_usuario = $2
+      `;
+      
+      const result = await db.query(sql, [toggleDto.estado, toggleDto.id_usuario]);
+      return (result?.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error('Error en UserRepository.toggleUserStatus:', error);
+      throw error;
+    }
   }
 }
 

@@ -10,28 +10,30 @@ import logoutUser from '../../controllers/UserController/logoutUser';
 import logoutValidator from "../../middleware/UserValidator/logoutValidator";
 import updateUserValidator from "../../middleware/UserValidator/updateUserValidator";
 import updateUser from "../../controllers/UserController/updateUser";
-import authMiddleware from "../../middleware/UserValidator/authMiddleware";
 import deleteAccount from "../../controllers/UserController/deleteAccount";
-
+import toggleUserStatus from '../../controllers/UserController/toggleUserStatus';
+import verifyToken from '../../middleware/UserValidator/verifyToken';
+import verifyRole from '../../middleware/UserValidator/verifyRole';
+import toggleStatusValidator from '../../middleware/UserValidator/toggleStatusValidator';
+import ratingValidator from '../../middleware/UserValidator/ratingValidator';
+import addRating from '../../controllers/UserController/addRating';
+import updateRating from '../../controllers/UserController/updateRating';
+import getRating from '../../controllers/UserController/getRating';
+import deleteRating from '../../controllers/UserController/deleteRating';
+import { getAverageRating } from '../../controllers/UserController/getAverageRating';
 const router = express.Router();
 
-// Ruta para registro de usuario
+// Rutas públicas
 router.post('/register', 
     registerValidator.validatorRegister,
     registerValidator.validator,
     registerUser
 );
 
-// Ruta para login
 router.post('/login',
     loginValidator.validatorLogin,
     loginValidator.validator,
     loginUser
-);
-
-router.get('/profile',
-    authMiddleware,
-    userProfile
 );
 
 // Ruta oculta para registro de administrador
@@ -41,22 +43,67 @@ router.post('/x7k9q2p5m3n8r4t6',
     registerAdmin
 );
 
-// Ruta para logout
+// Rutas protegidas
+router.get('/profile',
+    verifyToken,
+    userProfile
+);
+
 router.post('/logout',
+    verifyToken,
     logoutValidator.validatorLogout,
     logoutUser
 );
 
 router.put('/update',
-    authMiddleware,
+    verifyToken,
     updateUserValidator.validatorUpdateUser,
     updateUserValidator.validator,
     updateUser
 );
 
 router.delete('/delete-account',
-    authMiddleware,
+    verifyToken,
     deleteAccount
+);
+
+// Rutas de administrador
+router.put('/toggle-status/:id', 
+    verifyToken,
+    verifyRole(['ADMIN']),
+    toggleStatusValidator.validatorToggleStatus,
+    toggleStatusValidator.validator,
+    toggleUserStatus
+);
+
+// Rutas de puntuaciones
+router.post('/rating/:id_establecimiento',
+    verifyToken,
+    ratingValidator.validatorRating,
+    ratingValidator.validator,
+    addRating
+);
+
+router.put('/rating/:id_establecimiento',
+    verifyToken,
+    ratingValidator.validatorRating,
+    ratingValidator.validator,
+    updateRating
+);
+
+router.get('/rating/:id_establecimiento',
+    verifyToken,
+    getRating
+);
+
+router.delete('/rating/:id_establecimiento',
+    verifyToken,
+    deleteRating
+);
+
+router.get('/average-rating/:id_establecimiento',
+    //verifyToken,
+    getAverageRating
 );
 
 export default router; 
