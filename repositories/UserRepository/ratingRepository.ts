@@ -118,11 +118,13 @@ class RatingRepository {
         try {
             const sql = `
                 SELECT 
-                    fk_id_establecimiento as establecimientoId,
-                    ROUND(AVG(puntuacion)::numeric, 1) as promedio
-                FROM visualiza
-                WHERE fk_id_establecimiento = $1
-                GROUP BY fk_id_establecimiento
+                    e.nombre as nombreEstablecimiento,
+                    v.fk_id_establecimiento as establecimientoId,
+                    ROUND(AVG(v.puntuacion)::numeric, 1) as promedio
+                FROM visualiza v
+                INNER JOIN establecimiento e ON e.id_establecimiento = v.fk_id_establecimiento
+                WHERE v.fk_id_establecimiento = $1
+                GROUP BY v.fk_id_establecimiento, e.nombre
             `;
             
             const result = await db.query(sql, [id_establecimiento]);
@@ -130,11 +132,16 @@ class RatingRepository {
             if (result.rows.length === 0) {
                 return {
                     establecimientoId: id_establecimiento,
+                    nombreEstablecimiento: null,
                     promedio: 0
                 };
             }
-
-            return result.rows[0];
+    
+            return {
+                establecimientoId: result.rows[0].establecimientoid,
+                nombreEstablecimiento: result.rows[0].nombreestablecimiento,
+                promedio: result.rows[0].promedio
+            };
         } catch (error) {
             console.error('Error en RatingRepository.getAverageRating:', error);
             throw error;
