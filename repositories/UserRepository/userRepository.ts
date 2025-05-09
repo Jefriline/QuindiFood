@@ -10,10 +10,10 @@ class UserRepository {
   static async add(user: RegisterUser) {
     // Primero insertamos en usuario_general
     const sql =
-      "INSERT INTO usuario_general (nombre, email, contrasena, estado, fecha_creacion_perf) VALUES ($1, $2, $3, $4, (NOW() AT TIME ZONE 'America/Bogota')) RETURNING id_usuario";
+      "INSERT INTO usuario_general (nombre, email, contraseña, estado, fecha_creacion_perf) VALUES ($1, $2, $3, $4, (NOW() AT TIME ZONE 'America/Bogota')) RETURNING id_usuario";
     const values = [user.nombre, user.email, user.contraseña, "Activo"];
     const result = await db.query(sql, values);
-
+    
     // Luego insertamos en la tabla cliente
     const userId = result.rows[0].id_usuario;
     const sqlCliente = "INSERT INTO cliente (id_cliente) VALUES ($1)";
@@ -30,7 +30,7 @@ class UserRepository {
 
     // Primero insertamos en usuario_general
     const sql =
-      "INSERT INTO usuario_general (nombre, email, contrasena, estado, fecha_creacion_perf) VALUES ($1, $2, $3, $4, (NOW() AT TIME ZONE 'America/Bogota')) RETURNING id_usuario";
+      "INSERT INTO usuario_general (nombre, email, contraseña, estado, fecha_creacion_perf) VALUES ($1, $2, $3, $4, (NOW() AT TIME ZONE 'America/Bogota')) RETURNING id_usuario";
     const values = [
       user.nombre,
       user.email,
@@ -39,9 +39,9 @@ class UserRepository {
     ];
     const result = await db.query(sql, values);
 
-    // Luego insertamos en la tabla administrador
+    // Luego insertamos en la tabla administrador_sistema
     const userId = result.rows[0].id_usuario;
-    const sqlAdmin = "INSERT INTO administrador (id_admin) VALUES ($1)";
+    const sqlAdmin = "INSERT INTO administrador_sistema (id_administrador) VALUES ($1)";
     await db.query(sqlAdmin, [userId]);
 
     return userId;
@@ -50,23 +50,23 @@ class UserRepository {
   // Método para login
   static async login(loginData: LoginUser) {
     const sql =
-      "SELECT id_usuario, contrasena FROM usuario_general WHERE email = $1";
+      "SELECT id_usuario, contraseña FROM usuario_general WHERE email = $1";
     const values = [loginData.email];
     const result = await db.query(sql, values);
 
     if (result.rows.length > 0) {
       const isPasswordValid = await bcrypt.compare(
         loginData.contraseña,
-        result.rows[0].contrasena
+        result.rows[0].contraseña
       );
       if (isPasswordValid) {
         // Verificar el rol del usuario
         const adminCheck = await db.query(
-          "SELECT * FROM administrador WHERE id_admin = $1",
+          "SELECT * FROM administrador_sistema WHERE id_administrador = $1",
           [result.rows[0].id_usuario]
         );
         const propietarioCheck = await db.query(
-          "SELECT * FROM propietario WHERE id_propietario = $1",
+          "SELECT * FROM propietario_establecimiento WHERE id_propietario = $1",
           [result.rows[0].id_usuario]
         );
 
@@ -99,11 +99,11 @@ class UserRepository {
     if (result.rows.length > 0) {
       // Verificar el rol del usuario
       const adminCheck = await db.query(
-        "SELECT * FROM administrador WHERE id_admin = $1",
+        "SELECT * FROM administrador_sistema WHERE id_administrador = $1",
         [id]
       );
       const propietarioCheck = await db.query(
-        "SELECT * FROM propietario WHERE id_propietario = $1",
+        "SELECT * FROM propietario_establecimiento WHERE id_propietario = $1",
         [id]
       );
 
@@ -131,23 +131,44 @@ class UserRepository {
 
   static async update(updateData: UpdateUserDto): Promise<boolean> {
     try {
-      const sql = `
-                UPDATE usuario_general
-                SET nombre = $1,
-                    email = $2,
-                    contrasena = $3,
-                    descripcion = $4
-                WHERE id_usuario = $5
-            `;
+      let sql: string;
+      let values: any[];
 
-      const result = await db.query(sql, [
-        updateData.nombre,
-        updateData.email,
-        updateData.contrasena,
-        updateData.descripcion,
-        updateData.id
-      ]);
+      if (updateData.contraseña) {
+        // Si se proporciona una nueva contraseña, actualizar todo incluyendo la contraseña
+        sql = `
+          UPDATE usuario_general
+          SET nombre = $1,
+              email = $2,
+              contraseña = $3,
+              descripcion = $4
+          WHERE id_usuario = $5
+        `;
+        values = [
+          updateData.nombre,
+          updateData.email,
+          updateData.contraseña,
+          updateData.descripcion,
+          updateData.id
+        ];
+      } else {
+        // Si no se proporciona contraseña, actualizar todo excepto la contraseña
+        sql = `
+          UPDATE usuario_general
+          SET nombre = $1,
+              email = $2,
+              descripcion = $3
+          WHERE id_usuario = $4
+        `;
+        values = [
+          updateData.nombre,
+          updateData.email,
+          updateData.descripcion,
+          updateData.id
+        ];
+      }
 
+      const result = await db.query(sql, values);
       return (result?.rowCount ?? 0) > 0;
     } catch (error) {
       console.error('Error en UserRepository.update:', error);
@@ -156,15 +177,13 @@ class UserRepository {
   }
 
   static async delete(id: number): Promise<boolean> {
-
-      const sql = `
+    const sql = `
                 DELETE FROM usuario_general
                 WHERE id_usuario = $1
             `;
 
-      const result = await db.query(sql, [id]);
-      return (result?.rowCount ?? 0) > 0;
-    
+    const result = await db.query(sql, [id]);
+    return (result?.rowCount ?? 0) > 0;
   }
 
   static async toggleUserStatus(toggleDto: ToggleUserStatusDto): Promise<boolean> {

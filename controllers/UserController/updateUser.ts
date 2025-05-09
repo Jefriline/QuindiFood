@@ -17,10 +17,10 @@ let updateUser = async (req: RequestWithUser, res: Response) => {
             });
         }
 
-        const { nombre, email, contrasena, descripcion } = req.body;
+        const { nombre, email, contraseña, descripcion } = req.body;
         const id = req.user.id;
         
-        const updateDto = new UpdateUserDto(id, nombre, email, contrasena, descripcion);
+        const updateDto = new UpdateUserDto(id, nombre, email, contraseña, descripcion);
         const result = await UserService.update(updateDto);
         
         if (!result.success) {

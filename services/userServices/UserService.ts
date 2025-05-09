@@ -66,9 +66,9 @@ class UserService {
                 }
             }
 
-            if (updateData.contrasena) {
+            if (updateData.contraseña) {
                 const salt = await bcrypt.genSalt(10);
-                updateData.contrasena = await bcrypt.hash(updateData.contrasena, salt);
+                updateData.contraseña = await bcrypt.hash(updateData.contraseña, salt);
             }
 
             const updated = await UserRepository.update(updateData);

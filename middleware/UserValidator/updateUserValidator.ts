@@ -15,12 +15,15 @@ const validatorUpdateUser = [
         .isEmail().withMessage('Debe ser un email válido')
         .isLength({ max: 320 }).withMessage('El email no puede exceder 320 caracteres'),
 
-    check('contrasena')
-        .optional()
-        .isString().withMessage('La contraseña debe ser texto')
-        .isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres')
-        .matches(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/)
-        .withMessage('La contraseña debe contener al menos una letra y un número'),
+        check('contraseña')
+        .isLength({ min: 6 })
+        .withMessage('La contraseña debe tener al menos 6 caracteres.')
+        .matches(/[A-Z]/)
+        .withMessage('La contraseña debe contener al menos una letra mayúscula.')
+        .matches(/[a-z]/)
+        .withMessage('La contraseña debe contener al menos una letra minúscula.')
+        .matches(/\d/)
+        .withMessage('La contraseña debe contener al menos un número.'),
 
     check('descripcion')
         .optional()

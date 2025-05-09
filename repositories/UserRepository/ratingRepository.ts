@@ -6,7 +6,7 @@ class RatingRepository {
         try {
             // Verificar si el cliente existe
             const clienteCheck = await db.query(
-                "SELECT * FROM usuario_general WHERE id_usuario = $1",
+                "SELECT * FROM cliente WHERE id_cliente = $1",
                 [rating.id_cliente]
             );
 
@@ -31,9 +31,9 @@ class RatingRepository {
             }
 
             const sql = `
-                INSERT INTO visualiza (fk_id_cliente, fk_id_establecimiento, puntuacion)
+                INSERT INTO puntuacion (FK_id_cliente, FK_id_establecimiento, valor_puntuado)
                 VALUES ($1, $2, $3)
-                RETURNING puntuacion
+                RETURNING valor_puntuado
             `;
             
             const result = await db.query(sql, [
@@ -42,7 +42,7 @@ class RatingRepository {
                 rating.puntuacion
             ]);
 
-            return result.rows[0].puntuacion;
+            return result.rows[0].valor_puntuado;
         } catch (error) {
             console.error('Error en RatingRepository.addRating:', error);
             throw error;
@@ -58,10 +58,10 @@ class RatingRepository {
             }
 
             const sql = `
-                UPDATE visualiza 
-                SET puntuacion = $3
-                WHERE fk_id_cliente = $1 AND fk_id_establecimiento = $2
-                RETURNING puntuacion
+                UPDATE puntuacion 
+                SET valor_puntuado = $3
+                WHERE FK_id_cliente = $1 AND FK_id_establecimiento = $2
+                RETURNING valor_puntuado
             `;
             
             const result = await db.query(sql, [
@@ -70,7 +70,7 @@ class RatingRepository {
                 rating.puntuacion
             ]);
 
-            return result.rows[0].puntuacion;
+            return result.rows[0].valor_puntuado;
         } catch (error) {
             console.error('Error en RatingRepository.updateRating:', error);
             throw error;
@@ -80,9 +80,9 @@ class RatingRepository {
     static async getRating(id_cliente: number, id_establecimiento: number) {
         try {
             const sql = `
-                SELECT puntuacion 
-                FROM visualiza 
-                WHERE fk_id_cliente = $1 AND fk_id_establecimiento = $2
+                SELECT valor_puntuado, FK_id_establecimiento
+                FROM puntuacion 
+                WHERE FK_id_cliente = $1 AND FK_id_establecimiento = $2
             `;
             
             const result = await db.query(sql, [id_cliente, id_establecimiento]);
@@ -91,7 +91,10 @@ class RatingRepository {
                 return null;
             }
 
-            return result.rows[0].puntuacion;
+            return {
+                puntuacion: result.rows[0].valor_puntuado,
+                id_establecimiento: result.rows[0].fk_id_establecimiento
+            };
         } catch (error) {
             console.error('Error en RatingRepository.getRating:', error);
             throw error;
@@ -101,9 +104,9 @@ class RatingRepository {
     static async deleteRating(id_cliente: number, id_establecimiento: number) {
         try {
             const sql = `
-                DELETE FROM visualiza 
-                WHERE fk_id_cliente = $1 AND fk_id_establecimiento = $2
-                RETURNING puntuacion
+                DELETE FROM puntuacion 
+                WHERE FK_id_cliente = $1 AND FK_id_establecimiento = $2
+                RETURNING valor_puntuado
             `;
             
             const result = await db.query(sql, [id_cliente, id_establecimiento]);
@@ -116,15 +119,26 @@ class RatingRepository {
 
     static async getAverageRating(id_establecimiento: number) {
         try {
+            // Primero verificar si el establecimiento existe
+            const establecimientoCheck = await db.query(
+                "SELECT * FROM establecimiento WHERE id_establecimiento = $1",
+                [id_establecimiento]
+            );
+
+            if (establecimientoCheck.rows.length === 0) {
+                throw new Error('El establecimiento no existe');
+            }
+
             const sql = `
                 SELECT 
-                    e.nombre as nombreEstablecimiento,
-                    v.fk_id_establecimiento as establecimientoId,
-                    ROUND(AVG(v.puntuacion)::numeric, 1) as promedio
-                FROM visualiza v
-                INNER JOIN establecimiento e ON e.id_establecimiento = v.fk_id_establecimiento
-                WHERE v.fk_id_establecimiento = $1
-                GROUP BY v.fk_id_establecimiento, e.nombre
+                    e.nombre_establecimiento as nombreEstablecimiento,
+                    p.FK_id_establecimiento as establecimientoId,
+                    ROUND(AVG(p.valor_puntuado)::numeric, 1) as promedio,
+                    COUNT(p.valor_puntuado) as total_puntuaciones
+                FROM puntuacion p
+                INNER JOIN establecimiento e ON e.id_establecimiento = p.FK_id_establecimiento
+                WHERE p.FK_id_establecimiento = $1
+                GROUP BY p.FK_id_establecimiento, e.nombre_establecimiento
             `;
             
             const result = await db.query(sql, [id_establecimiento]);
@@ -132,15 +146,17 @@ class RatingRepository {
             if (result.rows.length === 0) {
                 return {
                     establecimientoId: id_establecimiento,
-                    nombreEstablecimiento: null,
-                    promedio: 0
+                    nombreEstablecimiento: establecimientoCheck.rows[0].nombre_establecimiento,
+                    promedio: 0,
+                    total_puntuaciones: 0
                 };
             }
     
             return {
                 establecimientoId: result.rows[0].establecimientoid,
                 nombreEstablecimiento: result.rows[0].nombreestablecimiento,
-                promedio: result.rows[0].promedio
+                promedio: result.rows[0].promedio,
+                total_puntuaciones: parseInt(result.rows[0].total_puntuaciones)
             };
         } catch (error) {
             console.error('Error en RatingRepository.getAverageRating:', error);

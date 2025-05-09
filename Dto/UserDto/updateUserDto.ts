@@ -3,7 +3,7 @@ class UpdateUserDto {
         public id: number,
         public nombre: string,
         public email: string,
-        public contrasena: string,
+        public contraseña: string,
         public descripcion: string
     ) {}
 }

@@ -42,9 +42,9 @@ class RatingService {
 
     static async getRating(id_cliente: number, id_establecimiento: number) {
         try {
-            const puntuacion = await RatingRepository.getRating(id_cliente, id_establecimiento);
+            const result = await RatingRepository.getRating(id_cliente, id_establecimiento);
             
-            if (puntuacion === null) {
+            if (result === null) {
                 return {
                     success: false,
                     message: 'No se encontró una puntuación para este establecimiento'
@@ -53,7 +53,10 @@ class RatingService {
 
             return {
                 success: true,
-                data: { puntuacion }
+                data: {
+                    puntuacion: result.puntuacion,
+                    id_establecimiento: result.id_establecimiento
+                }
             };
         } catch (error) {
             console.error('Error en RatingService.getRating:', error);
@@ -96,7 +99,9 @@ class RatingService {
                     message: 'No hay puntuaciones para este establecimiento',
                     data: {
                         establecimientoId: id_establecimiento,
-                        promedio: 0
+                        nombreEstablecimiento: result.nombreEstablecimiento,
+                        promedio: 0,
+                        total_puntuaciones: 0
                     }
                 };
             }
@@ -104,7 +109,12 @@ class RatingService {
             return {
                 success: true,
                 message: 'Promedio obtenido exitosamente',
-                data: result
+                data: {
+                    establecimientoId: result.establecimientoId,
+                    nombreEstablecimiento: result.nombreEstablecimiento,
+                    promedio: result.promedio,
+                    total_puntuaciones: result.total_puntuaciones
+                }
             };
         } catch (error) {
             console.error('Error en RatingService.getAverageRating:', error);
