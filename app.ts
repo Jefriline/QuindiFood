@@ -3,9 +3,9 @@ import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 
 
-
 import userRoutes from './routes/UserRoutes/userRoutes';
 import establecimientoRoutes from './routes/EstablecimientoRoutes/establecimientoRoutes';
+import searchRoutes from './routes/SearchRoutes/searchRoutes';
 
 dotenv.config();
 
@@ -21,6 +21,8 @@ app.use('/user', userRoutes);
 
 
 app.use('/establecimiento', establecimientoRoutes);
+
+app.use('/search', searchRoutes);
 
 const PORT = process.env.PORT || 10101;
 
