@@ -9,12 +9,12 @@ const listEstablecimientos = async (req: Request, res: Response) => {
             message: "Establecimientos obtenidos exitosamente",
             data: establecimientos
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error al listar establecimientos:', error);
         return res.status(500).json({
             success: false,
             message: 'Error al obtener establecimientos',
-            error: error
+            error: error?.message || error?.toString() || 'Error desconocido'
         });
     }
 };
