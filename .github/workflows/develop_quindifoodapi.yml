@@ -23,43 +23,24 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          npm ci
-          npm list --depth=0
+        run: npm ci
 
       - name: Build TypeScript
-        run: |
-          npm run build
-          ls -la dist/
+        run: npm run build
 
-      - name: Prepare deployment package
+      - name: Copy files for deployment
         run: |
-          # Crear directorio dist si no existe
-          mkdir -p dist
-          
-          # Copiar archivos necesarios
-          cp package.json dist/
-          cp package-lock.json dist/
-          cp .env dist/ || echo "No .env file to copy"
-          
-          # Verificar estructura
-          echo "Estructura del directorio dist:"
-          ls -la dist/
-          
-          # Instalar solo las dependencias de producción en dist
-          cd dist
-          npm ci --only=production
-          cd ..
-          
-          # Verificar que todo esté en su lugar
-          echo "Verificando estructura final:"
-          ls -la dist/
+          mkdir -p deploy
+          cp -r dist deploy/
+          cp package.json deploy/
+          cp package-lock.json deploy/
+          cp .env deploy/ || echo "No .env file to copy"
 
-      - name: Upload dist folder as artifact
+      - name: Upload deploy folder as artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: dist/
+          path: deploy/
 
   deploy:
     runs-on: ubuntu-latest
@@ -77,12 +58,16 @@ jobs:
         with:
           name: node-app
 
-      - name: Verify deployment package
+      - name: Install production dependencies
         run: |
-          echo "Verificando paquete de despliegue:"
+          cd deploy
+          npm ci --only=production
+
+      - name: Verify deploy folder
+        run: |
+          cd deploy
           ls -la
-          echo "Verificando node_modules:"
-          ls -la node_modules || echo "No node_modules found"
+          ls -la dist
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -97,4 +82,4 @@ jobs:
         with:
           app-name: 'quindifoodapi'
           slot-name: 'Production'
-          package: . 
+          package: deploy
