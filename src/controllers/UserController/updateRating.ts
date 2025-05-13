@@ -1,9 +1,9 @@
 import { Response } from 'express';
 import RatingService from '../../services/userServices/RatingService';
 import RatingDto from '../../Dto/UserDto/ratingDto';
-import { CustomRequest } from '../../interfaces/customRequest';
+import { CustomRequest } from '../../src/interfaces/customRequest';
 
-const addRating = async (req: CustomRequest, res: Response) => {
+const updateRating = async (req: CustomRequest, res: Response) => {
     try {
         const { puntuacion } = req.body;
         const id_establecimiento = parseInt(req.params.id_establecimiento);
@@ -16,7 +16,7 @@ const addRating = async (req: CustomRequest, res: Response) => {
         }
 
         const ratingDto = new RatingDto(req.user.id, id_establecimiento, puntuacion);
-        const result = await RatingService.addRating(ratingDto);
+        const result = await RatingService.updateRating(ratingDto);
 
         if (!result.success) {
             return res.status(400).json(result);
@@ -24,7 +24,7 @@ const addRating = async (req: CustomRequest, res: Response) => {
 
         return res.status(200).json(result);
     } catch (error) {
-        console.error('Error en addRating:', error);
+        console.error('Error en updateRating:', error);
         return res.status(500).json({
             success: false,
             message: 'Error interno del servidor'
@@ -32,4 +32,4 @@ const addRating = async (req: CustomRequest, res: Response) => {
     }
 };
 
-export default addRating; 
+export default updateRating; 
