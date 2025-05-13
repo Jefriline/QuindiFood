@@ -27,8 +27,8 @@ class SearchRepository {
   }
 
   static async getCategories() {
-    const categoriasEstablecimiento = await db.query(`SELECT id_categoria_establecimiento AS id, nombre FROM categoria_establecimiento`);
-    const categoriasProducto = await db.query(`SELECT id_categoria_producto AS id, nombre FROM categoria_producto`);
+    const categoriasEstablecimiento = await db.query(`SELECT id_categoria_establecimiento AS id, nombre, descripcion FROM categoria_establecimiento`);
+    const categoriasProducto = await db.query(`SELECT id_categoria_producto AS id, nombre, descripcion FROM categoria_producto`);
     return {
       categorias_establecimiento: categoriasEstablecimiento.rows,
       categorias_producto: categoriasProducto.rows
