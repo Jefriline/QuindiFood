@@ -6,8 +6,7 @@
     "start": "node dist/app.js",
     "build": "tsc",
     "dev": "concurrently \"npm run watch\" \"nodemon dist/app.js\"",
-    "watch": "tsc --watch",
-    "postinstall": "npm run build"
+    "watch": "tsc --watch"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
