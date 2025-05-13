@@ -4,6 +4,9 @@ import jwt from 'jsonwebtoken';
 interface RequestWithUser extends Request {
     user?: {
         id: number;
+        email: string;
+        role: string;
+        [key: string]: any;
     };
 }
 
@@ -26,7 +29,11 @@ const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFun
             });
         }
         
-        req.user = { id: decoded.data.id };
+        req.user = { 
+            id: decoded.data.id,
+            email: decoded.data.email,
+            role: decoded.data.role
+        };
         next();
     } catch (error) {
         console.error('Error al verificar token:', error);

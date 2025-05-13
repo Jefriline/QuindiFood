@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import RatingService from '../../services/userServices/RatingService';
 import RatingDto from '../../Dto/UserDto/ratingDto';
-import { CustomRequest } from '../../src/interfaces/customRequest';
+import { CustomRequest } from '../../interfaces/customRequest';
 
 const updateRating = async (req: CustomRequest, res: Response) => {
     try {

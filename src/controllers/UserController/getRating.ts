@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import RatingService from '../../services/userServices/RatingService';
-import { CustomRequest } from '../../src/interfaces/customRequest';
+import { CustomRequest } from '../../interfaces/customRequest';
 
 const getRating = async (req: CustomRequest, res: Response) => {
     try {

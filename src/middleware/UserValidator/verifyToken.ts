@@ -4,7 +4,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 interface JwtPayload {
-    data: {id: number, role: string},
+    data: {
+        id: number;
+        role: string;
+        email: string;
+    },
     exp: number,
     iat: number
 }
@@ -26,7 +30,8 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
             let decoded = jwt.verify(token, process.env.KEY_TOKEN as string) as JwtPayload;
             req.user = {
                 id: decoded.data.id,
-                role: decoded.data.role
+                role: decoded.data.role,
+                email: decoded.data.email
             };
             next();
         } catch (error) {

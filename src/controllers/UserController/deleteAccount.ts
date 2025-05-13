@@ -1,11 +1,6 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import UserService from '../../services/userServices/UserService';
-
-interface RequestWithUser extends Request {
-    user?: {
-        id: number;
-    };
-}
+import { RequestWithUser } from '../../interfaces/request.interface';
 
 let deleteAccount = async (req: RequestWithUser, res: Response) => {
     try {

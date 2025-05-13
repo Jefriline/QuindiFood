@@ -1,14 +1,9 @@
 import { Request, Response } from 'express';
 import UserService from '../../services/userServices/UserService';
 import UpdateUserDto from '../../Dto/UserDto/updateUserDto';
+import { CustomRequest } from '../../interfaces/customRequest';
 
-interface RequestWithUser extends Request {
-    user?: {
-        id: number;
-    };
-}
-
-let updateUser = async (req: RequestWithUser, res: Response) => {
+let updateUser = async (req: CustomRequest, res: Response) => {
     try {
         if (!req.user || !req.user.id) {
             return res.status(401).json({

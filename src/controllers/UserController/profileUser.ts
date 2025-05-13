@@ -1,14 +1,9 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import UserService from "../../services/userServices/UserService";
 import UserProfileDto from "../../Dto/UserDto/userProfileDto";
+import { CustomRequest } from "../../interfaces/customRequest";
 
-interface RequestWithUser extends Request {
-    user?: {
-        id: number;
-    };
-}
-
-const userProfile = async (req: RequestWithUser, res: Response) => {
+const userProfile = async (req: CustomRequest, res: Response) => {
     try {
         if (!req.user || !req.user.id) {
             return res.status(401).json({
@@ -25,8 +20,6 @@ const userProfile = async (req: RequestWithUser, res: Response) => {
                 message: 'Usuario no encontrado'
             });
         }
-
-        
 
         return res.status(200).json({
             status: 'Éxito',
