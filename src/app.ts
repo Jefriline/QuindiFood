@@ -33,7 +33,7 @@ app.use('/establecimiento', establecimientoRoutes);
 
 app.use('/search', searchRoutes);
 
-const PORT = process.env.PORT || 10101;
+const PORT = 10101;
 
 app.listen(PORT, () => {
   console.log("Servidor ejecutándose en el puerto: ", PORT);
