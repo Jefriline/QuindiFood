@@ -5,5 +5,4 @@ export interface FilterParamsDto {
   tipoCocina?: string;
   calificacionMin?: number;
   calificacionMax?: number;
-  tipoProducto?: string;
 } 

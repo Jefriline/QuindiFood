@@ -4,7 +4,7 @@ import SearchService from '../../services/SearchServices/SearchService';
 
 const filter = async (req: Request, res: Response) => {
   try {
-    const { disponibleAhora, precioMin, precioMax, tipoCocina, calificacionMin, calificacionMax, tipoProducto} = req.query;
+    const { disponibleAhora, precioMin, precioMax, tipoCocina, calificacionMin, calificacionMax} = req.query;
 
 
     const resultado = await SearchService.filterByParams({
@@ -13,8 +13,7 @@ const filter = async (req: Request, res: Response) => {
       precioMax: precioMax ? Number(precioMax) : undefined,
       tipoCocina: tipoCocina ? String(tipoCocina) : undefined,
       calificacionMin: calificacionMin ? Number(calificacionMin) : undefined,
-      calificacionMax: calificacionMax ? Number(calificacionMax) : undefined,
-      tipoProducto: tipoProducto ? String(tipoProducto) : undefined
+      calificacionMax: calificacionMax ? Number(calificacionMax) : undefined
     });
 
     const { establecimientos, productos, sinEstablecimientosPorDisponibilidad } = resultado;

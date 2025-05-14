@@ -117,12 +117,6 @@ class SearchService {
         );
     }
 
-    // Filtrado por tipo de producto (para productos)
-    if (params.tipoProducto) {
-        productos = productos.filter(p =>
-            p.categoria?.toLowerCase() === params.tipoProducto!.toLowerCase()
-        );
-    }
 
     // Filtrado por calificación, si ambos valores existen
     if (params.calificacionMin !== undefined && params.calificacionMax !== undefined) {
@@ -186,7 +180,6 @@ static async SearchToFilter(): Promise<(SugerenciaEstablecimientoDto | Sugerenci
         p.nombre_establecimiento,
         p.imagenes,
         p.estado ?? null,
-        p.categoria  // Categoría del producto, que podría ser distinta de la del establecimiento
     ));
 
     // Retornar todos (o los primeros 10 si quieres limitar)

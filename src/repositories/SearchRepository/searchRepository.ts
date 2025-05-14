@@ -51,11 +51,13 @@ class SearchRepository {
     // Traer productos cuyos establecimientos tengan membresía activa
     const productos = await db.query(`
       SELECT p.id_producto, p.nombre, p.precio, p.descripcion, p.FK_id_establecimiento, e.nombre_establecimiento,
+        ce.nombre AS categoria,  -- Aquí se agrega la categoría del establecimiento
         COALESCE(mp.imagenes_array, '[]'::json) as imagenes,
         em.estado
       FROM producto p
       JOIN establecimiento e ON p.FK_id_establecimiento = e.id_establecimiento
       JOIN estado_membresia em ON e.id_establecimiento = em.FK_id_establecimiento
+      JOIN categoria_establecimiento ce ON e.FK_id_categoria_estab = ce.id_categoria_establecimiento -- Unión para obtener la categoría
       LEFT JOIN (
         SELECT FK_id_producto,
           json_agg(json_build_object('id_imagen', id_multimedia_producto, 'imagen', ref_multimedia)) as imagenes_array

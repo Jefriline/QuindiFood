@@ -58,7 +58,6 @@ class SugerenciaProductoDto {
     private _nombre_establecimiento: string;
     private _imagenes: Array<{id_imagen: number, imagen: string}>;
     private _estado_membresia_establecimiento: string;
-    private _categoria: string;
 
     constructor(
         id: number,
@@ -69,7 +68,6 @@ class SugerenciaProductoDto {
         nombre_establecimiento: string,
         imagenes: Array<{id_imagen: number, imagen: string}>,
         estado_membresia_establecimiento: string,
-        categoria?: string
 
     ) {
         this._id = id;
@@ -80,7 +78,6 @@ class SugerenciaProductoDto {
         this._nombre_establecimiento = nombre_establecimiento;
         this._imagenes = imagenes || [];
         this._estado_membresia_establecimiento = estado_membresia_establecimiento;
-        this._categoria = categoria || '';
     }
 
     get tipo() { return this._tipo; }
@@ -92,7 +89,7 @@ class SugerenciaProductoDto {
     get nombre_establecimiento() { return this._nombre_establecimiento; }
     get imagenes() { return this._imagenes; }
     get estado_membresia_establecimiento() { return this._estado_membresia_establecimiento; }
-    get categoria() { return this._categoria; }
+
 }
 
 class SearchByTermsResponseDto {
