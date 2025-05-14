@@ -6,6 +6,8 @@ import cors from 'cors';
 import userRoutes from './routes/UserRoutes/userRoutes';
 import establecimientoRoutes from './routes/EstablecimientoRoutes/establecimientoRoutes';
 import searchRoutes from './routes/SearchRoutes/searchRoutes';
+import blobStorageRoute from './routes/Blob-Storage/blobStorageRoute';
+import productoRoutes from './routes/ProductoRoutes/productoRoutes';
 
 dotenv.config();
 
@@ -32,6 +34,10 @@ app.use('/user', userRoutes);
 app.use('/establecimiento', establecimientoRoutes);
 
 app.use('/search', searchRoutes);
+
+app.use('/producto', productoRoutes);
+
+app.use('/storage/blob', blobStorageRoute);
 
 const port = process.env.PORT || 10101;
 

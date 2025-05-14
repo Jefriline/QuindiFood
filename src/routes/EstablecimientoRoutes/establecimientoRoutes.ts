@@ -4,6 +4,8 @@ import listEstablecimientos from '../../controllers/EstablecimientoController/li
 import getDetalleEstablecimiento from '../../controllers/EstablecimientoController/detalleEstablecimiento';
 import getEstablecimientosCompletos from '../../controllers/EstablecimientoController/establecimientoCompleto';
 import establecimientoValidator from '../../middleware/EstablecimientoValidator/establecimientoValidator';
+import getEstablecimientoById from '../../controllers/EstablecimientoController/getEstablecimientoByIdController';
+import getEstadoEstablecimiento from '../../controllers/EstablecimientoController/getEstadoEstablecimientoController';
 
 const router = express.Router();
 
@@ -12,9 +14,12 @@ const router = express.Router();
 
 
 // Ruta para obtener establecimientos completos
-router.get('/list', getEstablecimientosCompletos);
+router.get('/list', listEstablecimientos);
 
 // Ruta para obtener detalle de un establecimiento
 // router.get('/detalle/:id', getDetalleEstablecimiento);
+
+router.get('/:id', getEstablecimientoById);
+router.get('/disponibilidad/:id', getEstadoEstablecimiento);
 
 export default router; 
