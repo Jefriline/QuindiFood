@@ -4,33 +4,45 @@ import SearchService from '../../services/SearchServices/SearchService';
 
 const filter = async (req: Request, res: Response) => {
   try {
-    const { q, disponibleAhora, precioMin, precioMax, tipoCocina } = req.query;
-    if (!q) {
-      return res.status(400).json({ error: 'El parámetro q es obligatorio.' });
-    }
-    const resultados = await SearchService.filterByParams({
-      q: String(q),
+    const { disponibleAhora, precioMin, precioMax, tipoCocina, calificacionMin, calificacionMax, tipoProducto} = req.query;
+
+
+    const resultado = await SearchService.filterByParams({
       disponibleAhora: disponibleAhora === 'true',
       precioMin: precioMin ? Number(precioMin) : undefined,
       precioMax: precioMax ? Number(precioMax) : undefined,
       tipoCocina: tipoCocina ? String(tipoCocina) : undefined,
+      calificacionMin: calificacionMin ? Number(calificacionMin) : undefined,
+      calificacionMax: calificacionMax ? Number(calificacionMax) : undefined,
+      tipoProducto: tipoProducto ? String(tipoProducto) : undefined
     });
 
-    // Separar resultados
-    const establecimientos = resultados.filter(r => r.tipo === 'establecimiento' || r.tipo === 'establecimiento');
-    const productos = resultados.filter(r => r.tipo === 'producto' || r.tipo === 'producto');
+    const { establecimientos, productos, sinEstablecimientosPorDisponibilidad } = resultado;
 
     const mensajes: string[] = [];
+
     if (!establecimientos.length) {
-      let msg = 'No se encontraron establecimientos';
-      if (tipoCocina) msg += ` para la categoría "${tipoCocina}"`;
-      if (disponibleAhora === 'true') msg += ' disponibles en este momento';
-      msg += '.';
-      mensajes.push(msg);
+      if (sinEstablecimientosPorDisponibilidad) {
+        mensajes.push('No hay establecimientos disponibles en este momento.');
+      } else {
+        let msg = 'No se encontraron establecimientos';
+        if (tipoCocina) msg += ` para la categoría "${tipoCocina}"`;
+        if (disponibleAhora !== undefined) {
+          msg += disponibleAhora === 'true'
+            ? ' disponibles en este momento'
+            : ' no disponibles en este momento';
+        }
+
+        msg += '.';
+        mensajes.push(msg);
+      }
     }
+
     if (!productos.length) {
       let msg = 'No se encontraron productos';
-      if (precioMin || precioMax) msg += ` en el rango de precio${precioMin ? ' mínimo ' + precioMin : ''}${precioMax ? ' máximo ' + precioMax : ''}`;
+      if (precioMin || precioMax) {
+        msg += ` en el rango de precio${precioMin ? ' mínimo ' + precioMin : ''}${precioMax ? ' máximo ' + precioMax : ''}`;
+      }
       msg += '.';
       mensajes.push(msg);
     }
@@ -40,11 +52,12 @@ const filter = async (req: Request, res: Response) => {
     }
 
     res.json({ establecimientos, productos, mensajes });
+
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Error interno del servidor.' });
   }
-}
-  
+};
+
 
 
 export default filter; 
