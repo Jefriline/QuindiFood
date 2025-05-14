@@ -3,7 +3,7 @@ name: Build and deploy Node.js app to Azure Web App - quindifoodapi
 on:
   push:
     branches:
-      - develop
+      - feature/upload-files-blob-storage-azure
   workflow_dispatch:
 
 jobs:
