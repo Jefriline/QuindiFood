@@ -3,7 +3,7 @@ name: Build and deploy Node.js app to Azure Web App - quindifoodapi
 on:
   push:
     branches:
-      - feature/upload-files-blob-storage-azure
+      - develop
   workflow_dispatch:
 
 jobs:
@@ -24,6 +24,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Clean deploy folder before build
+        run: rm -rf deploy
 
       - name: Build TypeScript
         run: npm run build
