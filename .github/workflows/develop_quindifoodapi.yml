@@ -60,6 +60,10 @@ jobs:
           name: node-app
           path: deploy
 
+      - name: Clean old files before deploy
+        run: |
+          find . -mindepth 1 ! -regex '^./deploy\(/.*\)?' -delete
+
       - name: Move deploy content to root
         run: |
           shopt -s dotglob
