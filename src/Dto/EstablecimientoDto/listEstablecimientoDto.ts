@@ -7,7 +7,6 @@ export class ListEstablecimientoDto {
     private _imagen: { id_imagen: number, imagen: string }[];
     private _estado_membresia: string;
     private _promedio: number;
-    private _esta_abierto: boolean;
     private _horarios: {
         dia: string;
         hora_apertura: string;
@@ -23,7 +22,7 @@ export class ListEstablecimientoDto {
         imagen: { id_imagen: number, imagen: string }[],
         estado_membresia: string,
         promedio: number,
-        esta_abierto: boolean,
+        
         horarios: { dia: string; hora_apertura: string; hora_cierre: string; }[]
     ) {
         this._id_establecimiento = id_establecimiento;
@@ -34,7 +33,7 @@ export class ListEstablecimientoDto {
         this._imagen = imagen;
         this._estado_membresia = estado_membresia;
         this._promedio = promedio;
-        this._esta_abierto = esta_abierto;
+        
         this._horarios = horarios;
     }
 
@@ -47,7 +46,7 @@ export class ListEstablecimientoDto {
     get imagen(): { id_imagen: number, imagen: string }[] { return this._imagen; }
     get estado_membresia(): string { return this._estado_membresia; }
     get promedio(): number { return this._promedio; }
-    get esta_abierto(): boolean { return this._esta_abierto; }
+    
     get horarios(): { dia: string; hora_apertura: string; hora_cierre: string; }[] { return this._horarios; }
 
     toJSON() {
@@ -60,7 +59,7 @@ export class ListEstablecimientoDto {
             _imagen: this._imagen,
             _estado_membresia: this._estado_membresia,
             _promedio: this._promedio,
-            _esta_abierto: this._esta_abierto,
+            
             _horarios: this._horarios
         };
     }

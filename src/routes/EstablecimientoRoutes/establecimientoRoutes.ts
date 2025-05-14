@@ -2,7 +2,7 @@ import express from 'express';
 import registerEstablecimiento from '../../controllers/EstablecimientoController/registerEstablecimiento';
 import listEstablecimientos from '../../controllers/EstablecimientoController/listEstablecimiento';
 import getDetalleEstablecimiento from '../../controllers/EstablecimientoController/detalleEstablecimiento';
-import getEstablecimientosCompletos from '../../controllers/EstablecimientoController/establecimientoCompleto';
+
 import establecimientoValidator from '../../middleware/EstablecimientoValidator/establecimientoValidator';
 import getEstablecimientoById from '../../controllers/EstablecimientoController/getEstablecimientoByIdController';
 import getEstadoEstablecimiento from '../../controllers/EstablecimientoController/getEstadoEstablecimientoController';

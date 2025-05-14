@@ -74,7 +74,6 @@ class ListEstablecimientoRepository {
                     imagenes,
                     row.estado_membresia,
                     parseFloat(row.promedio_calificacion),
-                    parseFloat(row.total_puntuaciones),
                     row.horarios || []
                 );
             });
