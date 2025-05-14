@@ -2,9 +2,7 @@ import express from 'express';
 import searchByTerms from '../../controllers/SearchController/searchByTerms';
 import validatorSearchByTerms from '../../middleware/SearchValidator/searchByTerms';
 import getCategories from '../../controllers/SearchController/getCategories';
-import filterSearch from '../../controllers/SearchController/filterSearch';
-import validatorFilterSearch from '../../middleware/SearchValidator/filterSearch';
-
+import filter from '../../controllers/SearchController/filterController';
 const router = express.Router();
 
 router.get('/suggestions',
@@ -14,9 +12,7 @@ router.get('/suggestions',
 
 router.get('/categories', getCategories);
 
-router.get('/filter',
-    validatorFilterSearch.validatorFilterSearch,
-    filterSearch
-);
+router.get('/filter', filter);
+
 
 export default router; 
