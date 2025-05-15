@@ -106,4 +106,9 @@ router.get('/average-rating/:id_establecimiento',
     getAverageRating
 );
 
+/*  
+router.get('profile/user/:id',)
+
+*/
+
 export default router; 
