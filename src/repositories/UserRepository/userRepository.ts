@@ -92,7 +92,7 @@ class UserRepository {
   // Método para obtener usuario por ID
   static async getById(id: number) {
     const sql =
-      "SELECT id_usuario, nombre, email, descripcion, fecha_creacion_perf FROM usuario_general WHERE id_usuario = $1";
+      "SELECT id_usuario, nombre, email, descripcion,foto_perfil,plato_favorito, fecha_creacion_perf FROM usuario_general WHERE id_usuario = $1";
     const values = [id];
     const result = await db.query(sql, values);
 
@@ -131,42 +131,60 @@ class UserRepository {
 
   static async update(updateData: UpdateUserDto): Promise<boolean> {
     try {
-      let sql: string;
-      let values: any[];
+      let updateFields: string[] = [];
+      let values: any[] = [];
+      let paramIndex = 1;
+
+      // Construir dinámicamente los campos a actualizar
+      if (updateData.nombre) {
+        updateFields.push(`nombre = $${paramIndex}`);
+        values.push(updateData.nombre);
+        paramIndex++;
+      }
+
+      if (updateData.email) {
+        updateFields.push(`email = $${paramIndex}`);
+        values.push(updateData.email);
+        paramIndex++;
+      }
 
       if (updateData.contraseña) {
-        // Si se proporciona una nueva contraseña, actualizar todo incluyendo la contraseña
-        sql = `
-          UPDATE usuario_general
-          SET nombre = $1,
-              email = $2,
-              contraseña = $3,
-              descripcion = $4
-          WHERE id_usuario = $5
-        `;
-        values = [
-          updateData.nombre,
-          updateData.email,
-          updateData.contraseña,
-          updateData.descripcion,
-          updateData.id
-        ];
-      } else {
-        // Si no se proporciona contraseña, actualizar todo excepto la contraseña
-        sql = `
-          UPDATE usuario_general
-          SET nombre = $1,
-              email = $2,
-              descripcion = $3
-          WHERE id_usuario = $4
-        `;
-        values = [
-          updateData.nombre,
-          updateData.email,
-          updateData.descripcion,
-          updateData.id
-        ];
+        updateFields.push(`contraseña = $${paramIndex}`);
+        values.push(updateData.contraseña);
+        paramIndex++;
       }
+
+      if (updateData.descripcion !== undefined) {
+        updateFields.push(`descripcion = $${paramIndex}`);
+        values.push(updateData.descripcion);
+        paramIndex++;
+      }
+
+      if (updateData.foto_perfil !== undefined) {
+        updateFields.push(`foto_perfil = $${paramIndex}`);
+        values.push(updateData.foto_perfil);
+        paramIndex++;
+      }
+
+      if (updateData.plato_favorito !== undefined) {
+        updateFields.push(`plato_favorito = $${paramIndex}`);
+        values.push(updateData.plato_favorito);
+        paramIndex++;
+      }
+
+      // Si no hay campos para actualizar, retornar false
+      if (updateFields.length === 0) {
+        return false;
+      }
+
+      // Agregar el ID al final de los valores
+      values.push(updateData.id);
+
+      const sql = `
+        UPDATE usuario_general
+        SET ${updateFields.join(', ')}
+        WHERE id_usuario = $${paramIndex}
+      `;
 
       const result = await db.query(sql, values);
       return (result?.rowCount ?? 0) > 0;

@@ -1,7 +1,28 @@
 import { Request, Response } from 'express';
 import UserService from '../../services/userServices/UserService';
 import UpdateUserDto from '../../Dto/UserDto/updateUserDto';
+import UserProfileDto from '../../Dto/UserDto/userProfileDto';
 import { CustomRequest } from '../../interfaces/customRequest';
+import { uploadBlob, deleteBlob, deleteBlobByName, limpiarBlobsUsuario } from '../../Helpers/Azure/Blob-Storage/Blob-Storage';
+import multer from 'multer';
+import { BlobSASPermissions } from '@azure/storage-blob';
+import { BlobServiceClient } from '@azure/storage-blob';
+
+// Configuración de multer para manejar la subida de archivos
+const storage = multer.memoryStorage();
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // límite de 5MB
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Solo se permiten archivos de imagen'));
+        }
+    }
+}).single('foto_perfil');
 
 let updateUser = async (req: CustomRequest, res: Response) => {
     try {
@@ -12,10 +33,52 @@ let updateUser = async (req: CustomRequest, res: Response) => {
             });
         }
 
-        const { nombre, email, contraseña, descripcion } = req.body;
+        // Manejar la subida de archivo si existe
+        if (req.file) {
+            // Obtener la foto actual del usuario
+            const user = await UserService.getById(new UserProfileDto(req.user.id));
+            if (user?.foto_perfil) {
+                const currentFileName = user.foto_perfil.split('/').pop()?.split('?')[0];
+                if (currentFileName) {
+                    await deleteBlobByName('images', currentFileName);
+                }
+            }
+
+            // Subir la nueva foto
+            const connectionString = process.env.AZURE_STORAGE_CONECTION_STRING;
+            if (!connectionString) {
+                throw new Error('Azure Storage connection string is not defined');
+            }
+            
+            const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+            const containerClient = blobServiceClient.getContainerClient('images');
+            const blobClient = containerClient.getBlockBlobClient(req.file.originalname);
+            
+            // Subir el archivo
+            await blobClient.uploadData(req.file.buffer);
+            
+            // Generar URL de visualización con SAS
+            const sasOptions = {
+                permissions: BlobSASPermissions.parse("r"),
+                expiresOn: new Date("2099-12-31") 
+            };
+            
+            const viewUrl = await blobClient.generateSasUrl(sasOptions);
+            req.body.foto_perfil = viewUrl;
+        }
+
+        const { nombre, email, contraseña, descripcion, foto_perfil, plato_favorito } = req.body;
         const id = req.user.id;
         
-        const updateDto = new UpdateUserDto(id, nombre, email, contraseña, descripcion);
+        // Crear DTO solo con los campos que se proporcionaron
+        const updateDto = new UpdateUserDto(id);
+        if (nombre) updateDto.nombre = nombre;
+        if (email) updateDto.email = email;
+        if (contraseña) updateDto.contraseña = contraseña;
+        if (descripcion) updateDto.descripcion = descripcion;
+        if (foto_perfil) updateDto.foto_perfil = foto_perfil;
+        if (plato_favorito) updateDto.plato_favorito = plato_favorito;
+        
         const result = await UserService.update(updateDto);
         
         if (!result.success) {
@@ -25,9 +88,18 @@ let updateUser = async (req: CustomRequest, res: Response) => {
             });
         }
 
+        const updatedFields = [];
+        if (nombre) updatedFields.push('nombre');
+        if (email) updatedFields.push('email');
+        if (contraseña) updatedFields.push('contraseña');
+        if (descripcion) updatedFields.push('descripcion');
+        if (foto_perfil) updatedFields.push('foto_perfil');
+        if (plato_favorito) updatedFields.push('plato_favorito');
+
         return res.status(200).json({ 
             status: 'Éxito', 
-            message: result.message
+            message: 'Usuario actualizado exitosamente',
+            actualizados: updatedFields
         });
     } catch (error: any) {
         console.error('Error al actualizar usuario:', error);
@@ -37,6 +109,25 @@ let updateUser = async (req: CustomRequest, res: Response) => {
             error: error.message 
         });
     }
+};
+
+// Middleware para manejar la subida de archivos
+export const uploadMiddleware = (req: Request, res: Response, next: Function) => {
+    upload(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+            return res.status(400).json({
+                status: 'Error',
+                message: 'Error al subir el archivo',
+                error: err.message
+            });
+        } else if (err) {
+            return res.status(400).json({
+                status: 'Error',
+                message: err.message
+            });
+        }
+        next();
+    });
 };
 
 export default updateUser; 

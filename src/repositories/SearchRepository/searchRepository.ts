@@ -150,7 +150,7 @@ class SearchRepository {
     `);
 
     return { establecimientos: establecimientos.rows, productos: productos.rows };
-}
+  }
 
   
 }

@@ -56,7 +56,7 @@ class UserService {
             }
 
             // Verificar si el nuevo email ya existe (solo si es diferente al email actual)
-            if (updateData.email !== userExists.email) {
+            if (updateData.email && updateData.email !== userExists.email) {
                 const emailExists = await UserRepository.emailExists(updateData.email);
                 if (emailExists) {
                     return {

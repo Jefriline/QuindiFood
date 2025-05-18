@@ -9,7 +9,7 @@ import adminRegisterValidator from "../../middleware/UserValidator/adminRegister
 import logoutUser from '../../controllers/UserController/logoutUser';
 import logoutValidator from "../../middleware/UserValidator/logoutValidator";
 import updateUserValidator from "../../middleware/UserValidator/updateUserValidator";
-import updateUser from "../../controllers/UserController/updateUser";
+import updateUser, { uploadMiddleware } from "../../controllers/UserController/updateUser";
 import deleteAccount from "../../controllers/UserController/deleteAccount";
 import toggleUserStatus from '../../controllers/UserController/toggleUserStatus';
 import verifyToken from '../../middleware/UserValidator/verifyToken';
@@ -21,6 +21,9 @@ import updateRating from '../../controllers/UserController/updateRating';
 import getRating from '../../controllers/UserController/getRating';
 import deleteRating from '../../controllers/UserController/deleteRating';
 import { getAverageRating } from '../../controllers/UserController/getAverageRating';
+import getUserById from '../../controllers/UserController/getUserById';
+import getUserByIdValidator from '../../middleware/UserValidator/getUserByIdMiddleware';
+
 const router = express.Router();
 
 // Rutas públicas
@@ -34,6 +37,12 @@ router.post('/login',
     loginValidator.validatorLogin,
     loginValidator.validator,
     loginUser
+);
+
+router.get('/publicprofile/:id',
+    getUserByIdValidator.validatorGetUserById,
+    getUserByIdValidator.validator,
+    getUserById
 );
 
 // Ruta oculta para registro de administrador
@@ -57,6 +66,7 @@ router.post('/logout',
 
 router.put('/update',
     verifyToken,
+    uploadMiddleware,
     updateUserValidator.validatorUpdateUser,
     updateUserValidator.validator,
     updateUser
@@ -106,9 +116,6 @@ router.get('/average-rating/:id_establecimiento',
     getAverageRating
 );
 
-/*  
-router.get('profile/user/:id',)
 
-*/
 
 export default router; 
