@@ -1,5 +1,21 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
+
+type TokenUser = {
+    id: number;
+    email?: string;
+    role: string;
+    [key: string]: any;
+};
+
+function isTokenUser(obj: any): obj is TokenUser {
+    return (
+        typeof obj === 'object' &&
+        obj !== null &&
+        typeof obj.id === 'number' &&
+        typeof obj.role === 'string'
+    );
+}
 
 const verifyTokenRefresh = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
@@ -14,7 +30,7 @@ const verifyTokenRefresh = (req: Request, res: Response, next: NextFunction) => 
     try {
         // Ignora la expiración
         const decoded = jwt.verify(token, secret, { ignoreExpiration: true });
-        if (typeof decoded === 'object' && decoded !== null) {
+        if (isTokenUser(decoded)) {
             req.user = decoded;
             next();
         } else {
