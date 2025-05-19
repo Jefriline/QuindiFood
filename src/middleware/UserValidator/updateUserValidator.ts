@@ -4,18 +4,19 @@ import jwt from 'jsonwebtoken';
 
 const validatorUpdateUser = [
     check('nombre')
-        .exists().withMessage('El nombre es requerido')
+        .optional()
         .notEmpty().withMessage('El nombre no puede estar vacío')
         .isString().withMessage('El nombre debe ser texto')
         .isLength({ min: 3, max: 100 }).withMessage('El nombre debe tener entre 3 y 100 caracteres'),
 
     check('email')
-        .exists().withMessage('El email es requerido')
+        .optional()
         .notEmpty().withMessage('El email no puede estar vacío')
         .isEmail().withMessage('Debe ser un email válido')
         .isLength({ max: 320 }).withMessage('El email no puede exceder 320 caracteres'),
 
-        check('contraseña')
+    check('contraseña')
+        .optional()
         .isLength({ min: 6 })
         .withMessage('La contraseña debe tener al menos 6 caracteres.')
         .matches(/[A-Z]/)
@@ -34,6 +35,15 @@ const validatorUpdateUser = [
         .optional()
         .isString()
         .withMessage('La foto de perfil debe ser una cadena de texto.')
+        .isLength({ max: 500 })
+        .withMessage('La URL de la foto de perfil no puede exceder 500 caracteres'),
+
+    check('plato_favorito')
+        .optional()
+        .isString()
+        .withMessage('El plato favorito debe ser una cadena de texto.')
+        .isLength({ max: 100 })
+        .withMessage('El plato favorito no puede exceder 100 caracteres')
 ];
 
 const validator = (req: Request, res: Response, next: NextFunction) => {

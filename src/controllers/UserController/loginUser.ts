@@ -10,7 +10,7 @@ let loginUser = async (req: Request, res: Response) => {
         if (login.logged) {
             return res.status(200).json({
                 status: login.status,
-                token: generateToken({ id: login.id, role: login.role }, process.env.KEY_TOKEN, 50)
+                token: generateToken({ id: login.id, role: login.role }, process.env.KEY_TOKEN, 1440)
             });
         }
         return res.status(401).json({

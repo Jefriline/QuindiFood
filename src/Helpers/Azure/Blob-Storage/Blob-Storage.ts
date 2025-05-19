@@ -84,3 +84,28 @@ export const deleteBlob = async(req: Request, res: Response) => {
         res.status(500).json({ message: errorMessage });
     }
 }
+
+export async function deleteBlobByName(container: string, fileName: string) {
+    try {
+        const containerClient = blobServiceClient.getContainerClient(container);
+        await containerClient.getBlockBlobClient(fileName).deleteIfExists();
+        return true;
+    } catch (error) {
+        console.error("Error borrando blob:", error);
+        return false;
+    }
+}
+
+export async function limpiarBlobsUsuario(container: string, fotoActual: string | null) {
+    try {
+        const containerClient = blobServiceClient.getContainerClient(container);
+        for await (const blob of containerClient.listBlobsFlat()) {
+            // Si no es la foto actual, eliminar
+            if (!fotoActual || blob.name !== fotoActual) {
+                await containerClient.deleteBlob(blob.name);
+            }
+        }
+    } catch (error) {
+        console.error("Error limpiando blobs del usuario:", error);
+    }
+}
