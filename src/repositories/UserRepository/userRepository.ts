@@ -13,7 +13,7 @@ class UserRepository {
       "INSERT INTO usuario_general (nombre, email, contraseña, estado, fecha_creacion_perf) VALUES ($1, $2, $3, $4, (NOW() AT TIME ZONE 'America/Bogota')) RETURNING *";
     const values = [user.nombre, user.email, user.contraseña, "Pendiente"];
     const result = await db.query(sql, values);
-
+    
     // Insertar en la tabla cliente
     const usuario = result.rows[0]; // Aquí tienes el objeto completo, con id_usuario
     const sqlCliente = "INSERT INTO cliente (id_cliente) VALUES ($1)";
@@ -229,6 +229,63 @@ class UserRepository {
       console.error('Error al actualizar estado de confirmación:', error);
       throw error;
     }
+  }
+
+  static async getByEmail(email: string) {
+    try {
+      const sql = "SELECT * FROM usuario_general WHERE email = $1";
+      const result = await db.query(sql, [email]);
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error en UserRepository.getByEmail:', error);
+      throw error;
+    }
+  }
+
+  static async upsertPasswordResetCode(email: string, code: string, expiresAt: Date) {
+    await db.query(
+        `INSERT INTO password_reset_codes (email, code, expires_at, verified)
+         VALUES ($1, $2, $3, false)
+         ON CONFLICT (email) DO UPDATE SET code = $2, expires_at = $3, verified = false`,
+        [email, code, expiresAt]
+    );
+  }
+
+  static async getPasswordResetCode(email: string, code: string) {
+    const result = await db.query(
+        `SELECT * FROM password_reset_codes WHERE email = $1 AND code = $2 AND expires_at > (NOW() AT TIME ZONE 'America/Bogota')`,
+        [email.trim().toLowerCase(), String(code).trim()]
+    );
+    return result.rows[0];
+  }
+
+  static async verifyPasswordResetCode(email: string) {
+    await db.query(
+        `UPDATE password_reset_codes SET verified = true WHERE email = $1`,
+        [email]
+    );
+  }
+
+  static async isPasswordResetVerified(email: string) {
+    const result = await db.query(
+        `SELECT * FROM password_reset_codes WHERE email = $1 AND verified = true AND expires_at > (NOW() AT TIME ZONE 'America/Bogota')`,
+        [email]
+    );
+    return result.rows[0];
+  }
+
+  static async deletePasswordResetCode(email: string) {
+    await db.query(
+        `DELETE FROM password_reset_codes WHERE email = $1`,
+        [email]
+    );
+  }
+
+  static async updatePasswordByEmail(email: string, hashedPassword: string) {
+    await db.query(
+        `UPDATE usuario_general SET contraseña = $1 WHERE email = $2`,
+        [hashedPassword, email]
+    );
   }
 }
 

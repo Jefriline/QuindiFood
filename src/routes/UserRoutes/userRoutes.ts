@@ -26,6 +26,11 @@ import getUserByIdValidator from '../../middleware/UserValidator/getUserByIdMidd
 import refreshTokenController from '../../controllers/UserController/refreshToken';
 import verifyTokenRefresh from '../../middleware/UserValidator/verifyTokenRefresh';
 import confirmAccount from '../../controllers/UserController/confirmAccount';
+import requestPasswordReset from '../../controllers/UserController/requestPasswordResetController';
+import verifyResetCode from '../../controllers/UserController/verifyResetCodeController';
+import resetPassword from '../../controllers/UserController/resetPasswordController';
+import { validatePassword } from '../../middleware/UserValidator/passwordValidationMiddleware';
+
 
 const router = express.Router();
 
@@ -120,7 +125,12 @@ router.get('/average-rating/:id_establecimiento',
 );
 
 router.post('/refresh-token', verifyTokenRefresh, refreshTokenController);
-
 router.get('/confirmar-cuenta', confirmAccount);
+
+
+// Rutas de restablecimiento de contraseña
+router.post('/password-reset/solicitar-restablecimiento', requestPasswordReset);
+router.post('/password-reset/verificar-codigo', verifyResetCode);
+router.post('/password-reset/restablecer-password', validatePassword, resetPassword);
 
 export default router; 

@@ -26,15 +26,91 @@ export async function sendEmailAzure(to: string, subject: string, html: string, 
 export function getConfirmationEmailTemplate(nombre: string, link: string) {
     return `
     <html>
-        <body>
-            <h2>¡Hola, ${nombre}!</h2>
-            <p>Gracias por registrarte en QuindiFood.</p>
-            <p>Por favor, haz clic en el siguiente enlace para confirmar tu cuenta:</p>
-            <a href="${link}" style="background:#4CAF50;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Confirmar mi cuenta</a>
-            <p>Este enlace expirará en 24 horas.</p>
-            <br>
-            <small>Si no fuiste tú, ignora este correo.</small>
-        </body>
+      <body style="background:#fff !important; font-family: 'Segoe UI', Arial, sans-serif; color:#222 !important; margin:0; padding:0;">
+        <div style="max-width:520px; margin:40px auto; background:#fff !important; border-radius:18px; box-shadow:0 4px 24px #0002; padding:40px 28px;">
+          <div style="text-align:center;">
+            <img src="https://imagenesquindifood.blob.core.windows.net/importante/logoWithoutBackground.png?sv=2025-05-05&se=2099-12-31T00%3A00%3A00Z&sr=b&sp=r&sig=OXirhCpWwBr5b%2FyFd7pDjvHFYixH7ihXAO1jngqvmmY%3D" alt="QuindiFood" style="width:170px; margin-bottom:24px;"/>
+          </div>
+          <h2 style="color:#F59E42; text-align:center; margin-bottom:10px;">¡Hola, ${nombre}!</h2>
+          <p style="text-align:center; font-size:1.13em; color:#333 !important;">Gracias por registrarte en <b>QuindiFood</b>.<br>Para activar tu cuenta, haz clic en el siguiente botón:</p>
+          <div style="text-align:center; margin:38px 0;">
+            <table align="center" cellpadding="0" cellspacing="0" border="0" style="margin:auto;">
+              <tr>
+                <td>
+                  <a href="${link}" 
+                    style="
+                      display:inline-block;
+                      background: linear-gradient(90deg, #F59E42 0%, #FFD36E 100%) !important;
+                      color:#fff !important;
+                      text-decoration:none;
+                      padding:18px 0;
+                      width:220px;
+                      border-radius:12px;
+                      font-weight:bold;
+                      font-size:1.18em;
+                      box-shadow:0 4px 16px #F59E4266;
+                      text-align:center;
+                      letter-spacing:0.5px;
+                      border:none;
+                      outline:none;
+                      border-collapse:collapse;
+                    "
+                  >Confirmar mi cuenta</a>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <p style="text-align:center; color:#333 !important; font-size:1em;">Este enlace expirará en 24 horas.<br>Si no fuiste tú, ignora este correo.</p>
+          <hr style="border:none; border-top:1px solid #eee; margin:38px 0 18px 0;">
+          <div style="text-align:center; color:#bbb; font-size:1em;">&copy; QuindiFood 2025</div>
+        </div>
+      </body>
+    </html>
+    `;
+}
+
+export function getVerificationCodeTemplate(nombre: string, code: string) {
+    const codeArr = code.padStart(6, '0').slice(0, 6).split('');
+    return `
+    <html>
+      <body style="background:#fff !important; font-family: 'Segoe UI', Arial, sans-serif; color:#222 !important; margin:0; padding:0;">
+        <div style="max-width:520px; margin:40px auto; background:#fff !important; border-radius:18px; box-shadow:0 4px 24px #0002; padding:40px 28px;">
+          <div style="text-align:center;">
+            <img src="https://imagenesquindifood.blob.core.windows.net/importante/logoWithoutBackground.png?sv=2025-05-05&se=2099-12-31T00%3A00%3A00Z&sr=b&sp=r&sig=OXirhCpWwBr5b%2FyFd7pDjvHFYixH7ihXAO1jngqvmmY%3D" alt="QuindiFood" style="width:170px; margin-bottom:24px;"/>
+          </div>
+          <h2 style="color:#F59E42; text-align:center; margin-bottom:10px;">¡Hola, ${nombre}!</h2>
+          <p style="text-align:center; font-size:1.13em; color:#333 !important;">Has solicitado restablecer tu contraseña en <b>QuindiFood</b>.<br>Tu código de verificación es:</p>
+          
+          <!-- Código de verificación centrado -->
+          <div style="width:100%; text-align:center; margin:38px 0;">
+            ${codeArr.map(num => `
+              <span style="
+                display:inline-block;
+                width:52px;
+                height:62px;
+                background: linear-gradient(90deg, #F59E42 0%, #FFD36E 100%) !important;
+                color:#222 !important;
+                font-size:2.3em;
+                border-radius:14px;
+                font-weight:bold;
+                box-shadow:0 4px 16px #F59E4266;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                text-shadow:0 2px 8px #fff8;
+                border: 2.5px solid #fff !important;
+                outline: 2px solid #F59E42;
+                margin:0 8px;
+                line-height:62px;
+                text-align:center;
+                vertical-align:middle;
+              ">${num}</span>
+            `).join('')}
+          </div>
+          
+          <p style="text-align:center; color:#333 !important; font-size:1em;">Este código expirará en 15 minutos.<br>Si no solicitaste este cambio, ignora este correo.</p>
+          <hr style="border:none; border-top:1px solid #eee; margin:38px 0 18px 0;">
+          <div style="text-align:center; color:#bbb; font-size:1em;">&copy; QuindiFood 2025</div>
+        </div>
+      </body>
     </html>
     `;
 } 

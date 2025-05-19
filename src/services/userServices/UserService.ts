@@ -9,8 +9,12 @@ import dotenv from 'dotenv';
 import UpdateUserDto from '../../Dto/UserDto/updateUserDto';
 import ToggleUserStatusDto from '../../Dto/UserDto/toggleUserStatusDto';
 import jwt from 'jsonwebtoken';
-import { sendEmailAzure, getConfirmationEmailTemplate } from '../../Helpers/Azure/EmailHelper';
+import { sendEmailAzure, getConfirmationEmailTemplate, getVerificationCodeTemplate } from '../../Helpers/Azure/EmailHelper';
 import generateToken from '../../Helpers/Token/generateToken';
+
+import RequestPasswordResetDto from '../../Dto/UserDto/requestPasswordResetDto';
+import ResetPasswordDto from '../../Dto/UserDto/resetPasswordDto';
+import VerifyResetCodeDto from '../../Dto/UserDto/verifyResetCodeDto';
 
 dotenv.config();
 
@@ -221,6 +225,41 @@ class UserService {
         }
     }
 
+    static async requestPasswordReset(dto: RequestPasswordResetDto) {
+        const user = await UserRepository.getByEmail(dto.email);
+        if (!user || user.estado !== 'Activo') {
+            return { success: false, message: 'Usuario no válido' };
+        }
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+        await UserRepository.upsertPasswordResetCode(dto.email, code, expiresAt);
+        const html = getVerificationCodeTemplate(user.nombre, code);
+        await sendEmailAzure(dto.email, "Código de verificación - QuindiFood", html);
+        return { success: true, message: 'Se ha enviado un código de verificación a tu correo electrónico' };
+    }
+
+    static async verifyResetCode(dto: VerifyResetCodeDto) {
+        const codeRow = await UserRepository.getPasswordResetCode(dto.email, dto.code);
+        if (!codeRow) {
+            return { success: false, message: 'Código inválido o expirado' };
+        }
+        await UserRepository.verifyPasswordResetCode(dto.email);
+        return { success: true, message: 'Código verificado correctamente' };
+    }
+
+    static async resetPassword(dto: ResetPasswordDto) {
+        if (dto.contraseña !== dto.confirmarContraseña) {
+            return { success: false, message: 'Las contraseñas no coinciden' };
+        }
+        const verified = await UserRepository.isPasswordResetVerified(dto.email);
+        if (!verified) {
+            return { success: false, message: 'No se ha verificado el código o ha expirado' };
+        }
+        const hashedPassword = await generateHash(dto.contraseña);
+        await UserRepository.updatePasswordByEmail(dto.email, hashedPassword);
+        await UserRepository.deletePasswordResetCode(dto.email);
+        return { success: true, message: 'Contraseña actualizada exitosamente' };
+    }
 }
 
 export default UserService;
