@@ -1,14 +1,19 @@
+import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const verifyTokenRefresh = (req, res, next) => {
+const verifyTokenRefresh = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
         return res.status(401).json({ success: false, message: 'Token no proporcionado' });
     }
     const token = authHeader.split(' ')[1];
+    const secret = process.env.KEY_TOKEN;
+    if (!secret) {
+        return res.status(500).json({ success: false, message: 'No hay clave secreta configurada' });
+    }
     try {
         // Ignora la expiración
-        const decoded = jwt.verify(token, process.env.KEY_TOKEN, { ignoreExpiration: true });
+        const decoded = jwt.verify(token, secret, { ignoreExpiration: true });
         req.user = decoded;
         next();
     } catch (err) {

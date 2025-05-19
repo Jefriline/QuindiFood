@@ -27,24 +27,30 @@ class SearchService {
         }
         // Mapear establecimientos con horarios
         const establecimientosFiltrados = establecimientosUnicos
-            .filter(e => {
+            .map(e => {
                 const nombreNorm = quitarTildes(e.nombre_establecimiento.toLowerCase());
                 const descNorm = quitarTildes((e.descripcion || '').toLowerCase());
-                return nombreNorm.includes(termino) || descNorm.includes(termino);
+                let relevancia = 0;
+                if (nombreNorm === termino) relevancia = 3; // Coincidencia exacta
+                else if (nombreNorm.startsWith(termino)) relevancia = 2; // Al inicio
+                else if (nombreNorm.includes(termino)) relevancia = 1; // En el nombre
+                else if (descNorm.includes(termino)) relevancia = 0.5; // En la descripción
+                return { e, relevancia };
             })
-            .map(e => new SugerenciaEstablecimientoDto(
-                e.id_establecimiento,
-                e.nombre_establecimiento,
-                e.descripcion,
-                e.imagenes,
-                e.ubicacion,
-                e.categoria,
-                e.estado,
-                Array.isArray(e.horarios) ? e.horarios : [],
-                parseFloat(Number(e.promedio_calificacion).toFixed(2)),
-                e.total_puntuaciones
-            ))
-            .sort((a, b) => (a.estado_membresia === 'Activo' ? -1 : 1));
+            .filter(obj => obj.relevancia > 0)
+            .sort((a, b) => b.relevancia - a.relevancia)
+            .map(obj => new SugerenciaEstablecimientoDto(
+                obj.e.id_establecimiento,
+                obj.e.nombre_establecimiento,
+                obj.e.descripcion,
+                obj.e.imagenes,
+                obj.e.ubicacion,
+                obj.e.categoria,
+                obj.e.estado,
+                Array.isArray(obj.e.horarios) ? obj.e.horarios : [],
+                parseFloat(Number(obj.e.promedio_calificacion).toFixed(2)),
+                obj.e.total_puntuaciones
+            ));
         // Mapear productos con descripción
         const productosFiltrados = productosUnicos
             .filter(p => {
