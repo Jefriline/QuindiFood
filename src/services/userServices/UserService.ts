@@ -35,7 +35,7 @@ class UserService {
         );
 
         // 4. Enviar correo de confirmaciónes
-        const confirmationLink = `${process.env.BASE_URL}user/confirmar-cuenta?token=${token}`;
+        const confirmationLink = `${process.env.BASE_URL}/user/confirmar-cuenta?token=${token}`;
         const html = getConfirmationEmailTemplate(usuario.nombre, confirmationLink);
         await sendEmailAzure(usuario.email, "Confirma tu cuenta en QuindiFood", html);
 
@@ -201,6 +201,7 @@ class UserService {
     static async confirmAccount(token: string): Promise<{ success: boolean; message: string }> {
         try {
             const decoded = jwt.verify(token, process.env.KEY_TOKEN!) as any;
+            console.log('Decoded:', decoded);
             if (!decoded.data || typeof decoded.data.id !== 'number') {
                 return { success: false, message: 'Token inválido o expirado' };
             }
