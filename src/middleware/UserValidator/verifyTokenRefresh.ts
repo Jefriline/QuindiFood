@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 const verifyTokenRefresh = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
@@ -14,8 +14,12 @@ const verifyTokenRefresh = (req: Request, res: Response, next: NextFunction) => 
     try {
         // Ignora la expiración
         const decoded = jwt.verify(token, secret, { ignoreExpiration: true });
-        req.user = decoded;
-        next();
+        if (typeof decoded === 'object' && decoded !== null) {
+            req.user = decoded;
+            next();
+        } else {
+            return res.status(401).json({ success: false, message: 'Token no válido' });
+        }
     } catch (err) {
         return res.status(401).json({ success: false, message: 'Token no válido' });
     }
