@@ -25,6 +25,7 @@ import getUserById from '../../controllers/UserController/getUserById';
 import getUserByIdValidator from '../../middleware/UserValidator/getUserByIdMiddleware';
 import refreshTokenController from '../../controllers/UserController/refreshToken';
 import verifyTokenRefresh from '../../middleware/UserValidator/verifyTokenRefresh';
+import confirmAccount from '../../controllers/UserController/confirmAccount';
 
 const router = express.Router();
 
@@ -119,5 +120,7 @@ router.get('/average-rating/:id_establecimiento',
 );
 
 router.post('/refresh-token', verifyTokenRefresh, refreshTokenController);
+
+router.get('/confirmar-cuenta', confirmAccount);
 
 export default router; 

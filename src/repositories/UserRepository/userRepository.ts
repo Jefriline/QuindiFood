@@ -8,18 +8,18 @@ import ToggleUserStatusDto from '../../Dto/UserDto/toggleUserStatusDto';
 
 class UserRepository {
   static async add(user: RegisterUser) {
-    // Primero insertamos en usuario_general
+    // Insertar en usuario_general
     const sql =
-      "INSERT INTO usuario_general (nombre, email, contraseña, estado, fecha_creacion_perf) VALUES ($1, $2, $3, $4, (NOW() AT TIME ZONE 'America/Bogota')) RETURNING id_usuario";
-    const values = [user.nombre, user.email, user.contraseña, "Activo"];
+      "INSERT INTO usuario_general (nombre, email, contraseña, estado, fecha_creacion_perf) VALUES ($1, $2, $3, $4, (NOW() AT TIME ZONE 'America/Bogota')) RETURNING *";
+    const values = [user.nombre, user.email, user.contraseña, "Pendiente"];
     const result = await db.query(sql, values);
-    
-    // Luego insertamos en la tabla cliente
-    const userId = result.rows[0].id_usuario;
-    const sqlCliente = "INSERT INTO cliente (id_cliente) VALUES ($1)";
-    await db.query(sqlCliente, [userId]);
 
-    return userId;
+    // Insertar en la tabla cliente
+    const usuario = result.rows[0]; // Aquí tienes el objeto completo, con id_usuario
+    const sqlCliente = "INSERT INTO cliente (id_cliente) VALUES ($1)";
+    await db.query(sqlCliente, [usuario.id_usuario]);
+
+    return usuario; // Retorna el objeto completo
   }
 
   static async addAdmin(user: RegisterAdmin) {
@@ -92,7 +92,7 @@ class UserRepository {
   // Método para obtener usuario por ID
   static async getById(id: number) {
     const sql =
-      "SELECT id_usuario, nombre, email, descripcion,foto_perfil,plato_favorito, fecha_creacion_perf FROM usuario_general WHERE id_usuario = $1";
+      "SELECT id_usuario, nombre, email, descripcion,foto_perfil,plato_favorito, fecha_creacion_perf, estado FROM usuario_general WHERE id_usuario = $1";
     const values = [id];
     const result = await db.query(sql, values);
 
@@ -216,6 +216,17 @@ class UserRepository {
       return (result?.rowCount ?? 0) > 0;
     } catch (error) {
       console.error('Error en UserRepository.toggleUserStatus:', error);
+      throw error;
+    }
+  }
+
+  static async updateEstadoConfirmacion(id: number): Promise<boolean> {
+    try {
+      const sql = `UPDATE usuario_general SET estado = 'Activo' WHERE id_usuario = $1`;
+      const result = await db.query(sql, [id]);
+      return (result?.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error('Error al actualizar estado de confirmación:', error);
       throw error;
     }
   }

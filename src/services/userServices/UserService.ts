@@ -5,22 +5,40 @@ import RegisterAdmin from '../../Dto/UserDto/registerAdminDto';
 import UserProfileDto from '../../Dto/UserDto/userProfileDto';
 import generateHash from '../../Helpers/Hash/generateHash';
 import bcrypt from 'bcryptjs';
-import fs from 'fs/promises';
+import dotenv from 'dotenv';
 import UpdateUserDto from '../../Dto/UserDto/updateUserDto';
 import ToggleUserStatusDto from '../../Dto/UserDto/toggleUserStatusDto';
+import jwt from 'jsonwebtoken';
+import { sendEmailAzure, getConfirmationEmailTemplate } from '../../Helpers/Azure/EmailHelper';
+
+dotenv.config();
 
 class UserService {
     static async register(ru: RegisterUser) {
-        // Verificar si el email ya existe
+        // 1. Verificar si el email ya existe
         const emailExists = await UserRepository.emailExists(ru.email);
         if (emailExists) {
             throw new Error('El email ya está registrado');
         }
 
-        // Registrar usuario
+        // 2. Registrar usuario con estado pendiente
         const hashedPassword = await generateHash(ru.contraseña);
         const userToRegister = new RegisterUser(ru.nombre, ru.email, hashedPassword);
-        return await UserRepository.add(userToRegister);
+        const usuario = await UserRepository.add(userToRegister); // Este ya lo guarda como 'pendiente'
+
+        // 3. Generar token de confirmación (24h)
+        const token = jwt.sign(
+            { id: usuario.id_usuario || usuario.id }, // Ajusta según tu modelo
+            process.env.KEY_TOKEN!,
+            { expiresIn: '24h' }
+        );
+
+        // 4. Enviar correo de confirmación
+        const confirmationLink = `${process.env.BASE_URL}/user/confirmar-cuenta?token=${token}`;
+        const html = getConfirmationEmailTemplate(usuario.nombre, confirmationLink);
+        await sendEmailAzure(usuario.email, "Confirma tu cuenta en QuindiFood", html);
+
+        return usuario;
     }
 
     static async login(log: LoginUser) {
@@ -155,6 +173,25 @@ class UserService {
         } catch (error) {
             console.error('Error en UserService.toggleUserStatus:', error);
             throw error;
+        }
+    }
+
+    static async confirmAccount(token: string): Promise<{ success: boolean; message: string }> {
+        try {
+            const decoded = jwt.verify(token, process.env.KEY_TOKEN!) as any;
+            const userId = decoded.id || (decoded.data && decoded.data.id);
+
+            // Buscar usuario
+            const user = await UserRepository.getById(userId);
+            if (!user) return { success: false, message: 'Usuario no encontrado' };
+            if (user.estado === 'Activo') {
+                return { success: true, message: 'La cuenta ya estaba confirmada. Puedes iniciar sesión.' };
+            }
+
+            await UserRepository.updateEstadoConfirmacion(userId);
+            return { success: true, message: 'Cuenta confirmada. Ya puedes iniciar sesión.' };
+        } catch (err) {
+            return { success: false, message: 'Token inválido o expirado' };
         }
     }
 
