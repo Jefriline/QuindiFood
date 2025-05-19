@@ -34,7 +34,7 @@ class UserService {
             24 * 60 
         );
 
-        // 4. Enviar correo de confirmación
+        // 4. Enviar correo de confirmaciónes
         const confirmationLink = `${process.env.BASE_URL}user/confirmar-cuenta?token=${token}`;
         const html = getConfirmationEmailTemplate(usuario.nombre, confirmationLink);
         await sendEmailAzure(usuario.email, "Confirma tu cuenta en QuindiFood", html);
