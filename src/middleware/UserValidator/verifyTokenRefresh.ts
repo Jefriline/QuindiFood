@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 type TokenUser = {
     id: number;
-    email?: string;
+    email: string;
     role: string;
     [key: string]: any;
 };
@@ -13,7 +13,8 @@ function isTokenUser(obj: any): obj is TokenUser {
         typeof obj === 'object' &&
         obj !== null &&
         typeof obj.id === 'number' &&
-        typeof obj.role === 'string'
+        typeof obj.role === 'string' &&
+        typeof obj.email === 'string'
     );
 }
 
