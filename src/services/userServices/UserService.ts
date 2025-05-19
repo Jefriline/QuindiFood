@@ -10,6 +10,7 @@ import UpdateUserDto from '../../Dto/UserDto/updateUserDto';
 import ToggleUserStatusDto from '../../Dto/UserDto/toggleUserStatusDto';
 import jwt from 'jsonwebtoken';
 import { sendEmailAzure, getConfirmationEmailTemplate } from '../../Helpers/Azure/EmailHelper';
+import generateToken from '../../Helpers/Token/generateToken';
 
 dotenv.config();
 
@@ -27,14 +28,14 @@ class UserService {
         const usuario = await UserRepository.add(userToRegister); // Este ya lo guarda como 'pendiente'
 
         // 3. Generar token de confirmación (24h)
-        const token = jwt.sign(
-            { id: usuario.id_usuario || usuario.id }, // Ajusta según tu modelo
+        const token = generateToken(
+            { id: usuario.id_usuario, role: 'PENDIENTE' }, // Puedes agregar más datos si quieres
             process.env.KEY_TOKEN!,
-            { expiresIn: '24h' }
+            24 * 60 
         );
 
         // 4. Enviar correo de confirmación
-        const confirmationLink = `${process.env.BASE_URL}/user/confirmar-cuenta?token=${token}`;
+        const confirmationLink = `${process.env.BASE_URL}user/confirmar-cuenta?token=${token}`;
         const html = getConfirmationEmailTemplate(usuario.nombre, confirmationLink);
         await sendEmailAzure(usuario.email, "Confirma tu cuenta en QuindiFood", html);
 
@@ -42,7 +43,28 @@ class UserService {
     }
 
     static async login(log: LoginUser) {
-        return await UserRepository.login(log);
+        const result = await UserRepository.login(log);
+
+        // Si no está autenticado, retorna como antes
+        if (!result.logged) {
+            return result;
+        }
+
+        // Obtener el usuario completo para verificar el estado
+        const user = await UserRepository.getById(result.id);
+        if (!user) {
+            return { logged: false, status: "Usuario no encontrado" };
+        }
+
+        if (user.estado === "Pendiente") {
+            return { logged: false, status: "La cuenta no ha sido confirmada. Revisa tu correo." };
+        }
+        if (user.estado === "Inactivo") {
+            return { logged: false, status: "La cuenta está inactiva. Contacta al soporte." };
+        }
+
+        // Si está activo, retorna el resultado normal
+        return result;
     }
 
     static async getById(userProfile: UserProfileDto) {
@@ -179,7 +201,10 @@ class UserService {
     static async confirmAccount(token: string): Promise<{ success: boolean; message: string }> {
         try {
             const decoded = jwt.verify(token, process.env.KEY_TOKEN!) as any;
-            const userId = decoded.id || (decoded.data && decoded.data.id);
+            if (!decoded.data || typeof decoded.data.id !== 'number') {
+                return { success: false, message: 'Token inválido o expirado' };
+            }
+            const userId = decoded.data.id;
 
             // Buscar usuario
             const user = await UserRepository.getById(userId);

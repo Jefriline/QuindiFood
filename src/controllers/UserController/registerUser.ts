@@ -7,10 +7,11 @@ const registerUser = async (req: Request, res: Response) => {
         const { nombre, email, contraseña } = req.body;
         const userDto = new RegisterUser(nombre, email, contraseña);
         const usuario = await UserService.register(userDto);
+        const { id_usuario, nombre: nombreUsuario, email: emailUsuario, estado, fecha_creacion_perf } = usuario;
         res.status(201).json({
             success: true,
             message: 'Usuario registrado. Revisa tu correo para confirmar tu cuenta.',
-            usuario
+            usuario: { id_usuario, nombre: nombreUsuario, email: emailUsuario, estado, fecha_creacion_perf }
         });
     } catch (error: any) {
         res.status(400).json({ success: false, message: error.message });
