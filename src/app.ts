@@ -8,7 +8,9 @@ import establecimientoRoutes from './routes/EstablecimientoRoutes/establecimient
 import searchRoutes from './routes/SearchRoutes/searchRoutes';
 import blobStorageRoute from './routes/Blob-Storage/blobStorageRoute';
 import productoRoutes from './routes/ProductoRoutes/productoRoutes';
-
+import favoritoRoutes from './routes/FavoritoRoutes/favoritoRoutes';
+import comentarioRoutes from './routes/ComentarioRoutes/comentarioRoutes';
+import eventoRoutes from './routes/EventoRoutes/eventoRoutes';
 dotenv.config();
 
 const app = express().use(bodyParser.json());
@@ -21,23 +23,19 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-
 app.get('/', (req, res) => {
   res.send('¡QuindiFood está funcionando! ');
 });
 
 // routes
 app.use('/user', userRoutes);
-
-
-
 app.use('/establecimiento', establecimientoRoutes);
-
 app.use('/search', searchRoutes);
-
 app.use('/producto', productoRoutes);
-
-app.use('/storage/blob', blobStorageRoute);
+app.use('/favorito', favoritoRoutes);
+//app.use('/storage/blob', blobStorageRoute);
+app.use('/comentario', comentarioRoutes);
+app.use('/evento', eventoRoutes);
 
 const port = process.env.PORT || 10101;
 
@@ -46,3 +44,5 @@ app.listen(port, () => {
 }).on("error", (error) => {
   throw new Error(error.message);
 });
+
+export default app;

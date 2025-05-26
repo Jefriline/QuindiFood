@@ -9,7 +9,7 @@ import adminRegisterValidator from "../../middleware/UserValidator/adminRegister
 import logoutUser from '../../controllers/UserController/logoutUser';
 import logoutValidator from "../../middleware/UserValidator/logoutValidator";
 import updateUserValidator from "../../middleware/UserValidator/updateUserValidator";
-import updateUser, { uploadMiddleware } from "../../controllers/UserController/updateUser";
+import updateUser from "../../controllers/UserController/updateUser";
 import deleteAccount from "../../controllers/UserController/deleteAccount";
 import toggleUserStatus from '../../controllers/UserController/toggleUserStatus';
 import verifyToken from '../../middleware/UserValidator/verifyToken';
@@ -30,7 +30,7 @@ import requestPasswordReset from '../../controllers/UserController/requestPasswo
 import verifyResetCode from '../../controllers/UserController/verifyResetCodeController';
 import resetPassword from '../../controllers/UserController/resetPasswordController';
 import { validatePassword } from '../../middleware/UserValidator/passwordValidationMiddleware';
-
+import { uploadMiddleware } from "../../middleware/UserValidator/updateUserValidator";
 
 const router = express.Router();
 
