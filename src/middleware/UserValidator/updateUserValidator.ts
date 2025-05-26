@@ -1,6 +1,40 @@
 import { Request, Response, NextFunction } from 'express';
 import { check, validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
+import multer from 'multer';
+
+const storage = multer.memoryStorage();
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // límite de 5MB
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Solo se permiten archivos de imagen'));
+        }
+    }
+}).single('foto_perfil');
+
+export const uploadMiddleware = (req: Request, res: Response, next: Function) => {
+    upload(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+            return res.status(400).json({
+                status: 'Error',
+                message: 'Error al subir el archivo',
+                error: err.message
+            });
+        } else if (err) {
+            return res.status(400).json({
+                status: 'Error',
+                message: err.message
+            });
+        }
+        next();
+    });
+};
 
 const validatorUpdateUser = [
     check('nombre')

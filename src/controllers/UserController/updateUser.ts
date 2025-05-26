@@ -8,21 +8,7 @@ import multer from 'multer';
 import { BlobSASPermissions } from '@azure/storage-blob';
 import { BlobServiceClient } from '@azure/storage-blob';
 
-// Configuración de multer para manejar la subida de archivos
-const storage = multer.memoryStorage();
-const upload = multer({ 
-    storage: storage,
-    limits: {
-        fileSize: 5 * 1024 * 1024 // límite de 5MB
-    },
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Solo se permiten archivos de imagen'));
-        }
-    }
-}).single('foto_perfil');
+
 
 let updateUser = async (req: CustomRequest, res: Response) => {
     try {
@@ -110,24 +96,4 @@ let updateUser = async (req: CustomRequest, res: Response) => {
         });
     }
 };
-
-// Middleware para manejar la subida de archivos
-export const uploadMiddleware = (req: Request, res: Response, next: Function) => {
-    upload(req, res, (err) => {
-        if (err instanceof multer.MulterError) {
-            return res.status(400).json({
-                status: 'Error',
-                message: 'Error al subir el archivo',
-                error: err.message
-            });
-        } else if (err) {
-            return res.status(400).json({
-                status: 'Error',
-                message: err.message
-            });
-        }
-        next();
-    });
-};
-
 export default updateUser; 

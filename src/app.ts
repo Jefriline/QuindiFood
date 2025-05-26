@@ -10,6 +10,7 @@ import blobStorageRoute from './routes/Blob-Storage/blobStorageRoute';
 import productoRoutes from './routes/ProductoRoutes/productoRoutes';
 import favoritoRoutes from './routes/FavoritoRoutes/favoritoRoutes';
 import comentarioRoutes from './routes/ComentarioRoutes/comentarioRoutes';
+import eventoRoutes from './routes/EventoRoutes/eventoRoutes';
 dotenv.config();
 
 const app = express().use(bodyParser.json());
@@ -34,6 +35,7 @@ app.use('/producto', productoRoutes);
 app.use('/favorito', favoritoRoutes);
 //app.use('/storage/blob', blobStorageRoute);
 app.use('/comentario', comentarioRoutes);
+app.use('/evento', eventoRoutes);
 
 const port = process.env.PORT || 10101;
 
