@@ -91,21 +91,34 @@ class SearchService {
 
     // Filtrado por disponibilidad
     if (params.disponibleAhora === true) {
-        establecimientos = establecimientos.filter(e =>
-            e.horarios.some((h: any) =>
-                h.dia_semana === diaSemana &&
-                h.hora_apertura <= horaActual &&
-                h.hora_cierre > horaActual
-            )
-        );
-    } else if (params.disponibleAhora === false) {
-        establecimientos = establecimientos.filter(e =>
-            !e.horarios.some((h: any) =>
-                h.dia_semana === diaSemana &&
-                h.hora_apertura <= horaActual &&
-                h.hora_cierre > horaActual
-            )
-        );
+        console.log('Filtrando por disponibilidad:', {
+            diaSemana,
+            horaActual
+        });
+
+        establecimientos = establecimientos.filter(e => {
+            if (!e.horarios || e.horarios.length === 0) {
+                return false; // Si no tiene horarios, no está disponible
+            }
+
+            return e.horarios.some((h: any) => {
+                const coincideDia = h.dia_semana === diaSemana;
+                const estaEnHorario = h.hora_apertura <= horaActual && h.hora_cierre > horaActual;
+                
+                console.log('Verificando horario:', {
+                    establecimiento: e.nombre,
+                    dia: h.dia_semana,
+                    apertura: h.hora_apertura,
+                    cierre: h.hora_cierre,
+                    coincideDia,
+                    estaEnHorario
+                });
+
+                return coincideDia && estaEnHorario;
+            });
+        });
+
+        console.log('Establecimientos disponibles:', establecimientos.length);
     }
 
     // Filtrado por precio

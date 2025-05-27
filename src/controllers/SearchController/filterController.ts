@@ -6,9 +6,17 @@ const filter = async (req: Request, res: Response) => {
   try {
     const { disponibleAhora, precioMin, precioMax, tipoCocina, calificacionMin, calificacionMax} = req.query;
 
+    console.log('Parámetros recibidos:', {
+        disponibleAhora,
+        precioMin,
+        precioMax,
+        tipoCocina,
+        calificacionMin,
+        calificacionMax
+    });
 
     const resultado = await SearchService.filterByParams({
-      disponibleAhora: disponibleAhora === 'true',
+      disponibleAhora: disponibleAhora === 'true' ? true : undefined,
       precioMin: precioMin ? Number(precioMin) : undefined,
       precioMax: precioMax ? Number(precioMax) : undefined,
       tipoCocina: tipoCocina ? String(tipoCocina) : undefined,
@@ -26,12 +34,9 @@ const filter = async (req: Request, res: Response) => {
       } else {
         let msg = 'No se encontraron establecimientos';
         if (tipoCocina) msg += ` para la categoría "${tipoCocina}"`;
-        if (disponibleAhora !== undefined) {
-          msg += disponibleAhora === 'true'
-            ? ' disponibles en este momento'
-            : ' no disponibles en este momento';
+        if (disponibleAhora === 'true') {
+          msg += ' disponibles en este momento';
         }
-
         msg += '.';
         mensajes.push(msg);
       }
