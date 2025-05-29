@@ -31,7 +31,8 @@ import verifyResetCode from '../../controllers/UserController/verifyResetCodeCon
 import resetPassword from '../../controllers/UserController/resetPasswordController';
 import { validatePassword } from '../../middleware/UserValidator/passwordValidationMiddleware';
 import { uploadMiddleware } from "../../middleware/UserValidator/updateUserValidator";
-
+import verifyRoleController from '../../controllers/UserController/verifyRoleController';
+import { verifyRoleToken } from '../../middleware/verifyRoleMiddleware';
 const router = express.Router();
 
 // Rutas públicas
@@ -132,5 +133,11 @@ router.get('/confirmar-cuenta', confirmAccount);
 router.post('/password-reset/solicitar-restablecimiento', requestPasswordReset);
 router.post('/password-reset/verificar-codigo', verifyResetCode);
 router.post('/password-reset/restablecer-password', validatePassword, resetPassword);
+
+// Agregar la nueva ruta para verificar rol
+router.post('/verify-role',
+    verifyRoleToken,
+    verifyRoleController
+);
 
 export default router; 
