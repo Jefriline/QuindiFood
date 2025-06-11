@@ -49,46 +49,47 @@ class UserRepository {
 
   // Método para login
   static async login(loginData: LoginUser) {
-    const sql =
-      "SELECT id_usuario, contraseña FROM usuario_general WHERE email = $1";
-    const values = [loginData.email];
-    const result = await db.query(sql, values);
+    const result = await db.query(
+      
+    SELECT 
+      u.id_usuario,
+      u.contraseña,
+      CASE 
+        WHEN a.id_administrador IS NOT NULL THEN 'ADMIN'
+        WHEN p.id_propietario IS NOT NULL THEN 'PROPIETARIO'
+        ELSE 'CLIENTE'
+      END AS role
+    FROM usuario_general u
+    LEFT JOIN administrador_sistema a ON u.id_usuario = a.id_administrador
+    LEFT JOIN propietario_establecimiento p ON u.id_usuario = p.id_propietario
+    WHERE u.email = $1
+    LIMIT 1;
+    ,
+      [loginData.email]
+    );
 
-    if (result.rows.length > 0) {
-      const isPasswordValid = await bcrypt.compare(
-        loginData.contraseña,
-        result.rows[0].contraseña
-      );
-      if (isPasswordValid) {
-        // Verificar el rol del usuario
-        const adminCheck = await db.query(
-          "SELECT * FROM administrador_sistema WHERE id_administrador = $1",
-          [result.rows[0].id_usuario]
-        );
-        const propietarioCheck = await db.query(
-          "SELECT * FROM propietario_establecimiento WHERE id_propietario = $1",
-          [result.rows[0].id_usuario]
-        );
-
-        let role = "CLIENTE";
-        if (adminCheck.rows.length > 0) {
-          role = "ADMIN";
-        } else if (propietarioCheck.rows.length > 0) {
-          role = "PROPIETARIO";
-        }
-
-        return {
-          logged: true,
-          status: "Autenticación exitosa",
-          id: result.rows[0].id_usuario,
-          role: role,
-        };
-      }
+    if (result.rows.length === 0) {
       return { logged: false, status: "Credenciales inválidas" };
     }
-    return { logged: false, status: "Credenciales inválidas" };
-  }
 
+    const user = result.rows[0];
+
+    const isPasswordValid = await bcrypt.compare(
+      loginData.contraseña,
+      user.contraseña
+    );
+
+    if (!isPasswordValid) {
+      return { logged: false, status: "Credenciales inválidas" };
+    }
+
+    return {
+      logged: true,
+      status: "Autenticación exitosa",
+      id: user.id_usuario,
+      role: user.role,
+    };
+  }
   // Método para obtener usuario por ID
   static async getById(id: number) {
     const sql =
