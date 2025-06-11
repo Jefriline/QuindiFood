@@ -50,21 +50,19 @@ class UserRepository {
   // Método para login
   static async login(loginData: LoginUser) {
     const result = await db.query(
-      
-    SELECT 
-      u.id_usuario,
-      u.contraseña,
-      CASE 
-        WHEN a.id_administrador IS NOT NULL THEN 'ADMIN'
-        WHEN p.id_propietario IS NOT NULL THEN 'PROPIETARIO'
-        ELSE 'CLIENTE'
-      END AS role
-    FROM usuario_general u
-    LEFT JOIN administrador_sistema a ON u.id_usuario = a.id_administrador
-    LEFT JOIN propietario_establecimiento p ON u.id_usuario = p.id_propietario
-    WHERE u.email = $1
-    LIMIT 1;
-    ,
+      `SELECT 
+        u.id_usuario,
+        u.contraseña,
+        CASE 
+          WHEN a.id_administrador IS NOT NULL THEN 'ADMIN'
+          WHEN p.id_propietario IS NOT NULL THEN 'PROPIETARIO'
+          ELSE 'CLIENTE'
+        END AS role
+      FROM usuario_general u
+      LEFT JOIN administrador_sistema a ON u.id_usuario = a.id_administrador
+      LEFT JOIN propietario_establecimiento p ON u.id_usuario = p.id_propietario
+      WHERE u.email = $1
+      LIMIT 1`,
       [loginData.email]
     );
 
