@@ -13,7 +13,7 @@ const getProductoByIdEstablecimiento = async (id: number) => {
 
   if (!rawData.length) return null;
 
-  // Tomamos los datos del establecimiento desde el primer producto
+  //Tomamos los datos del establecimiento desde el primer producto
   const {
     id_establecimiento,
     nombre_establecimiento,
