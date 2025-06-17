@@ -2,9 +2,9 @@ import ComentarioRepository from '../../repositories/ComentarioRepository/coment
 import { ComentarioDto } from '../../Dto/ComentarioDto/comentarioDto';
 
 class ComentarioService {
-    static async addComentario(id_cliente: number, id_establecimiento: number, cuerpo_comentario: string, id_comentario_padre?: number) {
+    static async addComentario(id_usuario: number, id_establecimiento: number, cuerpo_comentario: string, id_comentario_padre?: number) {
         try {
-            const comentario = new ComentarioDto(id_cliente, id_establecimiento, cuerpo_comentario, id_comentario_padre);
+            const comentario = new ComentarioDto(id_usuario, id_establecimiento, cuerpo_comentario, id_comentario_padre);
             const result = await ComentarioRepository.addComentario(comentario);
             return {
                 status: 'Éxito',
@@ -16,9 +16,9 @@ class ComentarioService {
         }
     }
 
-    static async deleteComentarioByIdAndCliente(id_comentario: number, id_cliente: number) {
+    static async deleteComentarioByIdAndCliente(id_comentario: number, id_usuario: number) {
         try {
-            await ComentarioRepository.deleteComentarioByIdAndCliente(id_comentario, id_cliente);
+            await ComentarioRepository.deleteComentarioByIdAndCliente(id_comentario, id_usuario);
             return { status: 'Éxito', message: 'Comentario eliminado correctamente' };
         } catch (error: any) {
             console.error('Error en el servicio al eliminar comentario:', error);
@@ -57,9 +57,9 @@ class ComentarioService {
         }
     }
 
-    static async getComentariosByCliente(id_cliente: number) {
+    static async getComentariosByCliente(id_usuario: number) {
         try {
-            const comentarios = await ComentarioRepository.getComentariosByCliente(id_cliente);
+            const comentarios = await ComentarioRepository.getComentariosByCliente(id_usuario);
             // Formatear respuesta plana con esRespuesta y id_comentario_padre
             return comentarios.map(c => ({
                 id_comentario: c.id_comentario,
