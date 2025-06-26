@@ -20,7 +20,8 @@ const listarSolicitudesPendientes = async (req: Request, res: Response) => {
                 row.horarios || [],
                 row.estado_establecimiento || row.estado || 'Pendiente',
                 row.fk_id_usuario || row.FK_id_usuario || 0,
-                row.documentos || row.documentacion || {}
+                row.documentos || row.documentacion || {},
+                row.created_at
             );
             return dto.toJSON();
         });

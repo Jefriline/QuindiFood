@@ -56,6 +56,7 @@ class ListEstablecimientoRepository {
                     e.ubicacion,
                     e.estado as estado_establecimiento,
                     e.FK_id_usuario,
+                    e.created_at,
                     c.nombre as categoria,
                     COALESCE(ia.imagenes_array, '[]'::json) as imagenes,
                     em.estado as estado_membresia,
@@ -104,7 +105,8 @@ class ListEstablecimientoRepository {
                     row.horarios || [],
                     row.estado_establecimiento,
                     row.fk_id_usuario,
-                    row.documentos
+                    row.documentos,
+                    row.created_at
                 );
                 return dto;
             });

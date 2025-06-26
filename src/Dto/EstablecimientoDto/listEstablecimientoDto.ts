@@ -15,6 +15,7 @@ export class ListEstablecimientoDto {
     }[];
     private _fk_id_usuario: number;
     private _documentos?: any;
+    private _created_at?: string;
 
     constructor(
         id_establecimiento: number,
@@ -28,7 +29,8 @@ export class ListEstablecimientoDto {
         horarios: { dia: string; hora_apertura: string; hora_cierre: string; }[],
         estado_establecimiento?: string,
         fk_id_usuario?: number,
-        documentos?: any
+        documentos?: any,
+        created_at?: string
     ) {
         this._id_establecimiento = id_establecimiento;
         this._nombre = nombre;
@@ -42,6 +44,7 @@ export class ListEstablecimientoDto {
         this._horarios = horarios;
         this._fk_id_usuario = fk_id_usuario || 0;
         this._documentos = documentos;
+        this._created_at = created_at;
     }
 
     // Getters
@@ -57,6 +60,7 @@ export class ListEstablecimientoDto {
     get horarios(): { dia: string; hora_apertura: string; hora_cierre: string; }[] { return this._horarios; }
     get fk_id_usuario(): number { return this._fk_id_usuario; }
     get documentos(): any { return this._documentos; }
+    get created_at(): string | undefined { return this._created_at; }
 
     toJSON() {
         return {
@@ -71,7 +75,8 @@ export class ListEstablecimientoDto {
             _promedio: this._promedio,
             _horarios: this._horarios,
             _fk_id_usuario: this._fk_id_usuario,
-            _documentos: this._documentos
+            _documentos: this._documentos,
+            _created_at: this._created_at
         };
     }
 }
