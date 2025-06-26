@@ -11,6 +11,9 @@ import productoRoutes from './routes/ProductoRoutes/productoRoutes';
 import favoritoRoutes from './routes/FavoritoRoutes/favoritoRoutes';
 import comentarioRoutes from './routes/ComentarioRoutes/comentarioRoutes';
 import eventoRoutes from './routes/EventoRoutes/eventoRoutes';
+import adminRoutes from './routes/AdminRoutes/adminRoutes';
+import promocionRoutes from './routes/PromocionRoutes/promocionRoutes';
+import categoriaRoutes from './routes/CategoriaRoutes/categoriaRoutes';
 dotenv.config();
 
 const app = express().use(bodyParser.json());
@@ -36,6 +39,9 @@ app.use('/favorito', favoritoRoutes);
 //app.use('/storage/blob', blobStorageRoute);
 app.use('/comentario', comentarioRoutes);
 app.use('/evento', eventoRoutes);
+app.use('/admin', adminRoutes);
+app.use('/promocion', promocionRoutes);
+app.use('/categoria', categoriaRoutes);
 
 const port = process.env.PORT || 10101;
 

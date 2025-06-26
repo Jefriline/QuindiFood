@@ -33,6 +33,8 @@ import { validatePassword } from '../../middleware/UserValidator/passwordValidat
 import { uploadMiddleware } from "../../middleware/UserValidator/updateUserValidator";
 import verifyRoleController from '../../controllers/UserController/verifyRoleController';
 import { verifyRoleToken } from '../../middleware/verifyRoleMiddleware';
+import eliminarUsuarioAdmin from '../../controllers/UserController/eliminarUsuarioAdminController';
+import eliminarUsuarioPropio from '../../controllers/UserController/eliminarUsuarioPropioController';
 const router = express.Router();
 
 // Rutas públicas
@@ -139,5 +141,10 @@ router.post('/verify-role',
     verifyRoleToken,
     verifyRoleController
 );
+
+// Eliminar usuario (admin)
+router.delete('/eliminar/usuario/:id', verifyToken, verifyRole(['ADMIN']), eliminarUsuarioAdmin);
+// Eliminar usuario (propio)
+router.delete('/eliminar/mi-usuario', verifyToken, eliminarUsuarioPropio);
 
 export default router; 
