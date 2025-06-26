@@ -10,10 +10,10 @@ import { ListEstablecimientoDto } from '../../Dto/EstablecimientoDto/listEstable
 export class EstablecimientoService {
     static async add(
         establecimiento: EstablecimientoDto,
-        multimedia: MultimediaEstablecimientoDto,
-        contactos: ContactoEstablecimientoDto[],
-        documentacion: DocumentacionDto,
-        estadoMembresia: EstadoMembresiaDto
+        multimedia: MultimediaEstablecimientoDto | null,
+        documentacion: DocumentacionDto | null,
+        estadoMembresia: EstadoMembresiaDto,
+        horarios?: any[]
     ) {
         try {
             console.log('Iniciando proceso de registro de establecimiento');
@@ -21,9 +21,9 @@ export class EstablecimientoService {
             const result = await EstablecimientoRepository.add(
                 establecimiento,
                 multimedia,
-                contactos,
                 documentacion,
-                estadoMembresia
+                estadoMembresia,
+                horarios
             );
 
             console.log('Guardado en base de datos exitoso');
@@ -46,6 +46,86 @@ export class EstablecimientoService {
             console.error('Error en el servicio al obtener establecimientos:', error);
             throw error;
         }
+    }
+
+    static async aprobarEstablecimiento(id: number, motivo?: string) {
+        try {
+            console.log(`Iniciando proceso de aprobación del establecimiento con ID: ${id}`);
+            const resultado = await EstablecimientoRepository.aprobarEstablecimiento(id, motivo);
+            console.log('Establecimiento aprobado exitosamente');
+            return resultado;
+        } catch (error) {
+            console.error('Error en el servicio al aprobar establecimiento:', error);
+            throw error;
+        }
+    }
+
+    static async rechazarEstablecimiento(id: number, motivo: string) {
+        try {
+            console.log(`Iniciando proceso de rechazo del establecimiento con ID: ${id}`);
+            const resultado = await EstablecimientoRepository.rechazarEstablecimiento(id, motivo);
+            console.log('Establecimiento rechazado exitosamente');
+            return resultado;
+        } catch (error) {
+            console.error('Error en el servicio al rechazar establecimiento:', error);
+            throw error;
+        }
+    }
+
+    static async getSolicitudesPendientes() {
+        try {
+            console.log('Iniciando proceso de obtención de solicitudes pendientes');
+            const solicitudes = await EstablecimientoRepository.getSolicitudesPendientes();
+            console.log('Solicitudes pendientes obtenidas exitosamente');
+            return solicitudes;
+        } catch (error) {
+            console.error('Error en el servicio al obtener solicitudes pendientes:', error);
+            throw error;
+        }
+    }
+
+    static async suspenderEstablecimiento(id: number) {
+        try {
+            console.log(`Iniciando proceso de suspensión del establecimiento con ID: ${id}`);
+            const resultado = await EstablecimientoRepository.suspenderEstablecimiento(id);
+            console.log('Establecimiento suspendido exitosamente');
+            return resultado;
+        } catch (error) {
+            console.error('Error en el servicio al suspender establecimiento:', error);
+            throw error;
+        }
+    }
+
+    static async eliminarEstablecimientoCompleto(idEstablecimiento: number, idUsuario?: number, isAdmin = false) {
+        return await EstablecimientoRepository.eliminarEstablecimientoCompleto(idEstablecimiento, idUsuario, isAdmin);
+    }
+
+    static async getMiEstablecimiento(idUsuario: number) {
+        try {
+            console.log(`Obteniendo establecimiento para usuario ID: ${idUsuario}`);
+            const establecimiento = await EstablecimientoRepository.getMiEstablecimiento(idUsuario);
+            console.log('Establecimiento obtenido exitosamente');
+            return establecimiento;
+        } catch (error) {
+            console.error('Error en el servicio al obtener mi establecimiento:', error);
+            throw error;
+        }
+    }
+
+    static async editarEstablecimiento(
+        idEstablecimiento: number, 
+        datosActualizados: any, 
+        nuevasFotos?: string[], 
+        fotosAEliminar?: number[],
+        nuevaDocumentacion?: any
+    ) {
+        return await EstablecimientoRepository.editarEstablecimiento(
+            idEstablecimiento, 
+            datosActualizados, 
+            nuevasFotos, 
+            fotosAEliminar,
+            nuevaDocumentacion
+        );
     }
 }
 

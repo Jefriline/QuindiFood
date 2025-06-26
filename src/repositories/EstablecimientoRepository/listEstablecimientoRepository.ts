@@ -2,9 +2,9 @@ import db from '../../config/config-db';
 import { ListEstablecimientoDto } from '../../Dto/EstablecimientoDto/listEstablecimientoDto';
 
 class ListEstablecimientoRepository {
-    static async getAll(): Promise<ListEstablecimientoDto[]> {
+    static async getAll(estado?: string): Promise<ListEstablecimientoDto[]> {
         try {
-            const sql = `
+            let sql = `
                 WITH imagenes_agrupadas AS (
                     SELECT 
                         FK_id_establecimiento,
@@ -38,34 +38,61 @@ class ListEstablecimientoRepository {
                         COUNT(*) as total
                     FROM puntuacion
                     GROUP BY FK_id_establecimiento
+                ),
+                documentos_agrupados AS (
+                    SELECT 
+                        FK_id_establecimiento,
+                        MAX(registro_mercantil) as registro_mercantil,
+                        MAX(rut) as rut,
+                        MAX(certificado_salud) as certificado_salud,
+                        MAX(registro_invima) as registro_invima
+                    FROM documentacion_establecimiento
+                    GROUP BY FK_id_establecimiento
                 )
                 SELECT 
                     e.id_establecimiento,
                     e.nombre_establecimiento,
                     e.descripcion,
                     e.ubicacion,
+                    e.estado as estado_establecimiento,
+                    e.FK_id_usuario,
                     c.nombre as categoria,
                     COALESCE(ia.imagenes_array, '[]'::json) as imagenes,
                     em.estado as estado_membresia,
                     COALESCE(punt.promedio, 0) as promedio_calificacion,
                     COALESCE(punt.total, 0) as total_puntuaciones,
-                    COALESCE(h.horarios_array, '[]'::json) as horarios
+                    COALESCE(h.horarios_array, '[]'::json) as horarios,
+                    json_build_object(
+                        'registro_mercantil', docu.registro_mercantil,
+                        'rut', docu.rut,
+                        'certificado_salud', docu.certificado_salud,
+                        'registro_invima', docu.registro_invima
+                    ) as documentos
                 FROM establecimiento e
                 LEFT JOIN categoria_establecimiento c ON e.FK_id_categoria_estab = c.id_categoria_establecimiento
                 LEFT JOIN imagenes_agrupadas ia ON e.id_establecimiento = ia.FK_id_establecimiento
                 LEFT JOIN estado_membresia em ON e.id_establecimiento = em.FK_id_establecimiento
                 LEFT JOIN puntuaciones_agrupadas punt ON e.id_establecimiento = punt.FK_id_establecimiento
                 LEFT JOIN horarios_agrupados h ON e.id_establecimiento = h.id_establecimiento
+                LEFT JOIN documentos_agrupados docu ON e.id_establecimiento = docu.FK_id_establecimiento
+            `;
+
+            if (estado && ['Pendiente', 'Aprobado', 'Rechazado', 'Suspendido'].includes(estado)) {
+                sql += ` WHERE e.estado = $1`;
+            }
+
+            sql += `
                 ORDER BY 
                     CASE WHEN em.estado = 'Activo' THEN 1 ELSE 0 END DESC,
                     e.id_establecimiento DESC
             `;
             
-            const result = await db.query(sql);
+            const params = estado && ['Pendiente', 'Aprobado', 'Rechazado', 'Suspendido'].includes(estado) ? [estado] : [];
+            const result = await db.query(sql, params);
             
             return result.rows.map(row => {
                 const imagenes = Array.isArray(row.imagenes) ? row.imagenes : [];
-                return new ListEstablecimientoDto(
+                const dto = new ListEstablecimientoDto(
                     row.id_establecimiento,
                     row.nombre_establecimiento,
                     row.descripcion,
@@ -74,8 +101,12 @@ class ListEstablecimientoRepository {
                     imagenes,
                     row.estado_membresia,
                     parseFloat(row.promedio_calificacion),
-                    row.horarios || []
+                    row.horarios || [],
+                    row.estado_establecimiento,
+                    row.fk_id_usuario,
+                    row.documentos
                 );
+                return dto;
             });
 
         } catch (error) {

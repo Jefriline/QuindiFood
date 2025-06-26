@@ -286,6 +286,38 @@ class UserRepository {
         [hashedPassword, email]
     );
   }
+
+  static async eliminarUsuarioCompleto(idUsuario: number, isAdmin = false, idFromToken?: number): Promise<boolean> {
+    const client = await db.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Validar permisos
+      if (!isAdmin && idUsuario !== idFromToken) {
+        throw new Error('No puedes eliminar otro usuario');
+      }
+      
+      // Verificar que el usuario existe
+      const userExists = await client.query(
+        'SELECT 1 FROM usuario_general WHERE id_usuario = $1',
+        [idUsuario]
+      );
+      if (userExists.rowCount === 0) {
+        throw new Error('Usuario no encontrado');
+      }
+      
+      // Eliminar el usuario (esto elimina en cascada toda la info relacionada)
+      await client.query('DELETE FROM usuario_general WHERE id_usuario = $1', [idUsuario]);
+      
+      await client.query('COMMIT');
+      return true;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
 }
 
 export default UserRepository;

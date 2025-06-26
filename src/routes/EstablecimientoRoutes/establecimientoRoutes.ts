@@ -1,25 +1,82 @@
 import express from 'express';
+import multer from 'multer';
 import registerEstablecimiento from '../../controllers/EstablecimientoController/registerEstablecimiento';
 import listEstablecimientos from '../../controllers/EstablecimientoController/listEstablecimiento';
 import getDetalleEstablecimiento from '../../controllers/EstablecimientoController/detalleEstablecimiento';
 
-import establecimientoValidator from '../../middleware/EstablecimientoValidator/establecimientoValidator';
+import establecimientoValidator, { uploadEstablecimiento } from '../../middleware/EstablecimientoValidator/establecimientoValidator';
 import getEstablecimientoById from '../../controllers/EstablecimientoController/getEstablecimientoByIdController';
 import getEstadoEstablecimiento from '../../controllers/EstablecimientoController/getEstadoEstablecimientoController';
+import verifyToken from '../../middleware/UserValidator/verifyToken';
+import { onlyCliente } from '../../middleware/UserValidator/onlyCliente';
+import verifyRole from '../../middleware/UserValidator/verifyRole';
+import eliminarEstablecimientoAdmin from '../../controllers/EstablecimientoController/eliminarEstablecimientoAdminController';
+import eliminarEstablecimientoPropietario from '../../controllers/EstablecimientoController/eliminarEstablecimientoPropietarioController';
+import getMiEstablecimiento from '../../controllers/EstablecimientoController/getMiEstablecimientoController';
+import editarEstablecimiento from '../../controllers/EstablecimientoController/editarEstablecimientoController';
+import verifyUserId from '../../middleware/UserValidator/verifyUserId';
+import { onlyPropietario } from '../../middleware/UserValidator/onlyPropietario';
+import { Request, Response, NextFunction } from 'express';
+import simpleUserId from '../../middleware/UserValidator/simpleUserId';
 
 const router = express.Router();
 
-// Ruta para registrar establecimiento
-// router.post('/register', establecimientoValidator.establecimientoValidatorParams, establecimientoValidator.validator, registerEstablecimiento);
+// Configurar multer para editar establecimiento
+const uploadEditarEstablecimiento = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB por archivo
+        files: 10 // Máximo 10 archivos
+    },
+    fileFilter: (req, file, cb) => {
+        // Permitir solo imágenes
+        const allowedTypes = /jpeg|jpg|png|gif/;
+        const extname = allowedTypes.test(file.originalname.toLowerCase());
+        const mimetype = allowedTypes.test(file.mimetype);
+        
+        if (mimetype && extname) {
+            return cb(null, true);
+        } else {
+            cb(new Error('Solo se permiten archivos de imagen'));
+        }
+    }
+});
 
+// Ruta para registrar establecimiento con upload de archivos
+router.post('/register', 
+    verifyToken,
+    onlyCliente,
+    uploadEstablecimiento,
+    establecimientoValidator.establecimientoValidatorParams, 
+    establecimientoValidator.validator, 
+    registerEstablecimiento
+);
 
 // Ruta para obtener establecimientos completos
 router.get('/list', listEstablecimientos);
 
+// Obtener mi establecimiento - DEBE IR ANTES DE /:id
+router.get('/mi-establecimiento', 
+    verifyToken, 
+    simpleUserId,
+    getMiEstablecimiento
+);
+
+// Estas rutas específicas ANTES de /:id
+router.get('/disponibilidad/:id', getEstadoEstablecimiento);
+
+// Ruta genérica /:id DEBE IR AL FINAL
+router.get('/:id', getEstablecimientoById);
+
 // Ruta para obtener detalle de un establecimiento
 // router.get('/detalle/:id', getDetalleEstablecimiento);
 
-router.get('/:id', getEstablecimientoById);
-router.get('/disponibilidad/:id', getEstadoEstablecimiento);
+// Editar establecimiento con manejo de archivos
+router.put('/editar/establecimiento', verifyToken, simpleUserId, onlyPropietario, uploadEditarEstablecimiento.array('fotos', 10), editarEstablecimiento);
+
+// Eliminar establecimiento (admin)
+router.delete('/eliminar/establecimiento/:id', verifyToken, verifyRole(['ADMIN']), eliminarEstablecimientoAdmin);
+// Eliminar establecimiento (propietario)
+router.delete('/eliminar/mi-establecimiento/:id', verifyToken, eliminarEstablecimientoPropietario);
 
 export default router; 

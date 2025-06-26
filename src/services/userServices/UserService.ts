@@ -260,6 +260,28 @@ class UserService {
         await UserRepository.deletePasswordResetCode(dto.email);
         return { success: true, message: 'Contraseña actualizada exitosamente' };
     }
+
+    static async eliminarUsuarioCompleto(idUsuario: number, isAdmin = false, idFromToken?: number): Promise<{ success: boolean; message: string }> {
+        try {
+            const deleted = await UserRepository.eliminarUsuarioCompleto(idUsuario, isAdmin, idFromToken);
+            if (deleted) {
+                return {
+                    success: true,
+                    message: 'Usuario eliminado exitosamente'
+                };
+            } else {
+                return {
+                    success: false,
+                    message: 'Error al eliminar el usuario'
+                };
+            }
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.message || 'Error al eliminar el usuario'
+            };
+        }
+    }
 }
 
 export default UserService;

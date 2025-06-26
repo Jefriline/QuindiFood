@@ -2,10 +2,10 @@ import ListEstablecimientoRepository from '../../repositories/EstablecimientoRep
 import { ListEstablecimientoDto } from '../../Dto/EstablecimientoDto/listEstablecimientoDto';
 
 export class ListEstablecimientoService {
-    static async getAll(): Promise<ListEstablecimientoDto[]> {
+    static async getAll(estado?: string): Promise<ListEstablecimientoDto[]> {
         try {
             console.log('Iniciando proceso de obtención de establecimientos');
-            const establecimientos = await ListEstablecimientoRepository.getAll();
+            const establecimientos = await ListEstablecimientoRepository.getAll(estado);
             console.log('Establecimientos obtenidos exitosamente');
             return establecimientos;
         } catch (error) {

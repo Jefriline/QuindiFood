@@ -113,4 +113,45 @@ export function getVerificationCodeTemplate(nombre: string, code: string) {
       </body>
     </html>
     `;
+}
+
+export function getAprobacionEstablecimientoTemplate(nombre: string, nombreEstablecimiento: string) {
+    return `
+    <html>
+      <body style="background:#fff !important; font-family: 'Segoe UI', Arial, sans-serif; color:#222 !important; margin:0; padding:0;">
+        <div style="max-width:520px; margin:40px auto; background:#fff !important; border-radius:18px; box-shadow:0 4px 24px #0002; padding:40px 28px;">
+          <div style="text-align:center;">
+            <img src="https://imagenesquindifood.blob.core.windows.net/importante/logoWithoutBackground.png?sv=2025-05-05&se=2099-12-31T00%3A00%3A00Z&sr=b&sp=r&sig=OXirhCpWwBr5b%2FyFd7pDjvHFYixH7ihXAO1jngqvmmY%3D" alt="QuindiFood" style="width:170px; margin-bottom:24px;"/>
+          </div>
+          <h2 style="color:#F59E42; text-align:center; margin-bottom:10px;">¡Hola, ${nombre}!</h2>
+          <p style="text-align:center; font-size:1.13em; color:#333 !important;">Tu establecimiento <b>${nombreEstablecimiento}</b> ha sido <b style='color:green;'>aprobado</b> y ya está visible en <b>QuindiFood</b>.<br>¡Ahora puedes gestionarlo!</p>
+          <p style="text-align:center; color:#333 !important; font-size:1em;">Si tienes dudas, contáctanos.<br>¡Bienvenido a la familia QuindiFood!</p>
+          <hr style="border:none; border-top:1px solid #eee; margin:38px 0 18px 0;">
+          <div style="text-align:center; color:#bbb; font-size:1em;">&copy; QuindiFood 2025</div>
+        </div>
+      </body>
+    </html>
+    `;
+}
+
+export function getRechazoEstablecimientoTemplate(nombre: string, nombreEstablecimiento: string, motivo: string) {
+    return `
+    <html>
+      <body style="background:#fff !important; font-family: 'Segoe UI', Arial, sans-serif; color:#222 !important; margin:0; padding:0;">
+        <div style="max-width:520px; margin:40px auto; background:#fff !important; border-radius:18px; box-shadow:0 4px 24px #0002; padding:40px 28px;">
+          <div style="text-align:center;">
+            <img src="https://imagenesquindifood.blob.core.windows.net/importante/logoWithoutBackground.png?sv=2025-05-05&se=2099-12-31T00%3A00%3A00Z&sr=b&sp=r&sig=OXirhCpWwBr5b%2FyFd7pDjvHFYixH7ihXAO1jngqvmmY%3D" alt="QuindiFood" style="width:170px; margin-bottom:24px;"/>
+          </div>
+          <h2 style="color:#F59E42; text-align:center; margin-bottom:10px;">¡Hola, ${nombre}!</h2>
+          <p style="text-align:center; font-size:1.13em; color:#333 !important;">Lamentamos informarte que tu establecimiento <b>${nombreEstablecimiento}</b> ha sido <b style='color:red;'>rechazado</b> en <b>QuindiFood</b>.</p>
+          <div style="background:#ffeaea; border-radius:10px; padding:18px; margin:28px 0; color:#b00; font-size:1.08em; text-align:center;">
+            <b>Motivo:</b> ${motivo}
+          </div>
+          <p style="text-align:center; color:#333 !important; font-size:1em;">Puedes corregir los datos y volver a enviar la solicitud.<br>Si tienes dudas, contáctanos.</p>
+          <hr style="border:none; border-top:1px solid #eee; margin:38px 0 18px 0;">
+          <div style="text-align:center; color:#bbb; font-size:1em;">&copy; QuindiFood 2025</div>
+        </div>
+      </body>
+    </html>
+    `;
 } 
