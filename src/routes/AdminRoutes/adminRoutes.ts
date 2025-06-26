@@ -5,8 +5,8 @@ import rechazarEstablecimiento from '../../controllers/EstablecimientoController
 import verifyToken from '../../middleware/UserValidator/verifyToken';
 import verifyRole from '../../middleware/UserValidator/verifyRole';
 import suspenderEstablecimiento from '../../controllers/EstablecimientoController/suspenderEstablecimientoController';
-import getDashboardStats from '../../controllers/EstablecimientoController/dashboardStatsController';
-import getDashboardActivities from '../../controllers/EstablecimientoController/dashboardActivitiesController';
+import { getDashboardStats } from '../../controllers/EstablecimientoController/dashboardStatsController';
+import { getDashboardActivities, getControlEstablecimientos } from '../../controllers/EstablecimientoController/dashboardActivitiesController';
 
 const router = express.Router();
 
@@ -17,8 +17,9 @@ router.put('/solicitudes-establecimientos/:id/approve', verifyToken, verifyRole(
 router.put('/solicitudes-establecimientos/:id/reject', verifyToken, verifyRole(['ADMIN']), rechazarEstablecimiento);
 router.put('/suspender-establecimiento/:id', verifyToken, verifyRole(['ADMIN']), suspenderEstablecimiento);
 
-// Rutas para el dashboard - Frontend espera /api/admin/dashboard/*
+// Rutas para el dashboard - Frontend espera /admin/dashboard/*
 router.get('/dashboard/stats', verifyToken, verifyRole(['ADMIN']), getDashboardStats);
 router.get('/dashboard/activities', verifyToken, verifyRole(['ADMIN']), getDashboardActivities);
+router.get('/dashboard/establecimientos', verifyToken, verifyRole(['ADMIN']), getControlEstablecimientos);
 
 export default router; 

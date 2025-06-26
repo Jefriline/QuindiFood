@@ -1,24 +1,29 @@
 import { Request, Response } from 'express';
 import DashboardService from '../../services/AdminService/dashboardService';
 
-const getDashboardActivities = async (req: Request, res: Response) => {
+export const getDashboardActivities = async (req: Request, res: Response) => {
     try {
-        const activities = await DashboardService.getActividadesRecientes();
-
-        return res.status(200).json({
-            success: true,
-            message: 'Actividades recientes obtenidas exitosamente',
-            data: activities
-        });
-
-    } catch (error: any) {
-        console.error('Error al obtener actividades recientes:', error);
-        return res.status(500).json({
+        const activities = await DashboardService.getDashboardActivities();
+        res.json(activities);
+    } catch (error) {
+        console.error('Error en getDashboardActivities:', error);
+        res.status(500).json({
             success: false,
-            message: 'Error al obtener actividades recientes',
-            error: error?.message || 'Error desconocido'
+            message: 'Error interno del servidor'
         });
     }
 };
 
-export default getDashboardActivities;
+// NUEVA FUNCIONALIDAD: Control de Establecimientos
+export const getControlEstablecimientos = async (req: Request, res: Response) => {
+    try {
+        const control = await DashboardService.getControlEstablecimientos();
+        res.json(control);
+    } catch (error) {
+        console.error('Error en getControlEstablecimientos:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor'
+        });
+    }
+};
