@@ -68,42 +68,44 @@ class DashboardRepository {
     static async getActividadesRecientes() {
         try {
             const result = await db.query(`
-                (
-                    SELECT 
-                        'Nuevo establecimiento registrado' as action,
-                        e.nombre_establecimiento as name,
-                        e.created_at as time,
-                        'establecimiento' as type
-                    FROM establecimiento e
-                    WHERE e.created_at >= NOW() - INTERVAL '7 days'
-                    ORDER BY e.created_at DESC
-                    LIMIT 5
-                )
-                UNION ALL
-                (
-                    SELECT 
-                        'Nuevo comentario agregado' as action,
-                        CONCAT('En ', est.nombre_establecimiento) as name,
-                        c.fecha_comentario as time,
-                        'comentario' as type
-                    FROM comentario c
-                    INNER JOIN establecimiento est ON c.FK_id_establecimiento = est.id_establecimiento
-                    WHERE c.fecha_comentario >= NOW() - INTERVAL '7 days'
-                    ORDER BY c.fecha_comentario DESC
-                    LIMIT 5
-                )
-                UNION ALL
-                (
-                    SELECT 
-                        'Nuevo usuario registrado' as action,
-                        u.nombre as name,
-                        u.fecha_creacion as time,
-                        'usuario' as type
-                    FROM usuario_general u
-                    WHERE u.fecha_creacion >= NOW() - INTERVAL '7 days'
-                    ORDER BY u.fecha_creacion DESC
-                    LIMIT 5
-                )
+                SELECT * FROM (
+                    (
+                        SELECT 
+                            'Nuevo establecimiento registrado' as action,
+                            e.nombre_establecimiento as name,
+                            e.created_at as time,
+                            'establecimiento' as type
+                        FROM establecimiento e
+                        WHERE e.created_at IS NOT NULL 
+                          AND e.created_at >= NOW() - INTERVAL '7 days'
+                        LIMIT 5
+                    )
+                    UNION ALL
+                    (
+                        SELECT 
+                            'Nuevo comentario agregado' as action,
+                            CONCAT('En ', est.nombre_establecimiento) as name,
+                            c.fecha_comentario as time,
+                            'comentario' as type
+                        FROM comentario c
+                        INNER JOIN establecimiento est ON c.FK_id_establecimiento = est.id_establecimiento
+                        WHERE c.fecha_comentario IS NOT NULL 
+                          AND c.fecha_comentario >= NOW() - INTERVAL '7 days'
+                        LIMIT 5
+                    )
+                    UNION ALL
+                    (
+                        SELECT 
+                            'Nuevo usuario registrado' as action,
+                            u.nombre as name,
+                            u.fecha_creacion as time,
+                            'usuario' as type
+                        FROM usuario_general u
+                        WHERE u.fecha_creacion IS NOT NULL 
+                          AND u.fecha_creacion >= NOW() - INTERVAL '7 days'
+                        LIMIT 5
+                    )
+                ) as actividades_recientes
                 ORDER BY time DESC
                 LIMIT 10
             `);
