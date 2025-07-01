@@ -3,6 +3,7 @@ import { MultimediaEstablecimientoDto } from '../../Dto/EstablecimientoDto/multi
 import { ContactoEstablecimientoDto } from '../../Dto/EstablecimientoDto/contactoEstablecimientoDto';
 import { DocumentacionDto } from '../../Dto/EstablecimientoDto/documentacionDto';
 import { EstadoMembresiaDto } from '../../Dto/EstablecimientoDto/estadoMembresiaDto';
+import { EstadoEstablecimientoUsuarioDto } from '../../Dto/EstablecimientoDto/estadoEstablecimientoUsuarioDto';
 import EstablecimientoRepository from '../../repositories/EstablecimientoRepository/establecimientoRepository';
 import ListEstablecimientoRepository from '../../repositories/EstablecimientoRepository/listEstablecimientoRepository';
 import { ListEstablecimientoDto } from '../../Dto/EstablecimientoDto/listEstablecimientoDto';
@@ -126,6 +127,16 @@ export class EstablecimientoService {
             fotosAEliminar,
             nuevaDocumentacion
         );
+    }
+
+    static async getEstadoEstablecimientoUsuario(idUsuario: number): Promise<EstadoEstablecimientoUsuarioDto> {
+        try {
+            const estadoEstablecimiento = await EstablecimientoRepository.getEstadoEstablecimientoUsuario(idUsuario);
+            return estadoEstablecimiento;
+        } catch (error) {
+            console.error('Error en el servicio de estado de establecimiento del usuario:', error);
+            throw error;
+        }
     }
 }
 

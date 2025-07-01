@@ -4,6 +4,7 @@ import { MultimediaEstablecimientoDto } from '../../Dto/EstablecimientoDto/multi
 import { DocumentacionDto } from '../../Dto/EstablecimientoDto/documentacionDto';
 import { EstadoMembresiaDto } from '../../Dto/EstablecimientoDto/estadoMembresiaDto';
 import { sendEmailAzure, getAprobacionEstablecimientoTemplate, getRechazoEstablecimientoTemplate } from '../../Helpers/Azure/EmailHelper';
+import { EstadoEstablecimientoUsuarioDto } from '../../Dto/EstablecimientoDto/estadoEstablecimientoUsuarioDto';
 
 class EstablecimientoRepository {
     static async add(
@@ -529,6 +530,46 @@ class EstablecimientoRepository {
             throw error;
         } finally {
             client.release();
+        }
+    }
+
+    static async getEstadoEstablecimientoUsuario(idUsuario: number): Promise<EstadoEstablecimientoUsuarioDto> {
+        try {
+            const sql = `
+                SELECT 
+                    e.id_establecimiento,
+                    e.nombre_establecimiento,
+                    e.estado as estado_establecimiento,
+                    e.created_at as fecha_creacion,
+                    COALESCE(em.estado, 'Inactivo') as estado_membresia
+                FROM establecimiento e
+                LEFT JOIN estado_membresia em ON e.id_establecimiento = em.FK_id_establecimiento
+                WHERE e.FK_id_usuario = $1
+                ORDER BY e.created_at DESC
+                LIMIT 1
+            `;
+            
+            const result = await db.query(sql, [idUsuario]);
+            
+            if (result.rowCount === 0) {
+                // El usuario no tiene establecimiento
+                return new EstadoEstablecimientoUsuarioDto(false);
+            }
+            
+            const establecimiento = result.rows[0];
+            
+            return new EstadoEstablecimientoUsuarioDto(
+                true,
+                establecimiento.id_establecimiento,
+                establecimiento.nombre_establecimiento,
+                establecimiento.estado_establecimiento,
+                establecimiento.estado_membresia,
+                establecimiento.fecha_creacion
+            );
+            
+        } catch (error) {
+            console.error('Error al obtener estado de establecimiento del usuario:', error);
+            throw error;
         }
     }
 }

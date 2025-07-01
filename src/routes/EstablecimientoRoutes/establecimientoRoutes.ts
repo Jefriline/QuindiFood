@@ -13,6 +13,7 @@ import verifyRole from '../../middleware/UserValidator/verifyRole';
 import eliminarEstablecimientoAdmin from '../../controllers/EstablecimientoController/eliminarEstablecimientoAdminController';
 import eliminarEstablecimientoPropietario from '../../controllers/EstablecimientoController/eliminarEstablecimientoPropietarioController';
 import getMiEstablecimiento from '../../controllers/EstablecimientoController/getMiEstablecimientoController';
+import getEstadoEstablecimientoUsuario from '../../controllers/EstablecimientoController/getEstadoEstablecimientoUsuarioController';
 import editarEstablecimiento from '../../controllers/EstablecimientoController/editarEstablecimientoController';
 import verifyUserId from '../../middleware/UserValidator/verifyUserId';
 import { onlyPropietario } from '../../middleware/UserValidator/onlyPropietario';
@@ -60,6 +61,13 @@ router.get('/mi-establecimiento',
     verifyToken, 
     simpleUserId,
     getMiEstablecimiento
+);
+
+// Verificar estado de establecimiento del usuario autenticado
+router.get('/estado-establecimiento', 
+    verifyToken, 
+    simpleUserId,
+    getEstadoEstablecimientoUsuario
 );
 
 // Estas rutas específicas ANTES de /:id
