@@ -49,7 +49,7 @@ router.post('/login',
     loginValidator.validator,
     loginUser
 );
-
+//
 router.get('/publicprofile/:id',
     getUserByIdValidator.validatorGetUserById,
     getUserByIdValidator.validator,
