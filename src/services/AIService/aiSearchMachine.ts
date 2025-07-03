@@ -34,7 +34,8 @@ export class AISearchMachine {
   private sentiment = new natural.SentimentAnalyzer('Spanish', natural.PorterStemmerEs, 'afinn');
 
   constructor() {
-    this.initializeCache();
+    // NO inicializar caché aquí - solo cuando se necesite
+    console.log('🤖 AISearchMachine creado - caché se inicializará cuando se use');
   }
 
   // Método principal de la máquina de búsqueda
