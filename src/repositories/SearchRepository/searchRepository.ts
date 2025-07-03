@@ -3,7 +3,7 @@ import db from "../../config/config-db";
 
 class SearchRepository {
   static async getEstablecimientosYProductosActivos(): Promise<{ establecimientos: any[], productos: any[] }> {
-    // Traer establecimientos con membresía activa
+    // Traer establecimientos con membresía activa Y estado Aprobado
     let innerSql = `
       SELECT e.id_establecimiento, e.nombre_establecimiento, e.descripcion, e.ubicacion,
         ce.id_categoria_establecimiento,
@@ -45,11 +45,12 @@ class SearchRepository {
         FROM puntuacion
         GROUP BY FK_id_establecimiento
       ) punt ON e.id_establecimiento = punt.FK_id_establecimiento
+      WHERE e.estado = 'Aprobado'
     `;
 
     const establecimientos = await db.query(innerSql);
 
-    // Traer productos cuyos establecimientos tengan membresía activa
+    // Traer productos cuyos establecimientos tengan membresía activa Y estado Aprobado
     const productos = await db.query(`
       SELECT p.id_producto, p.nombre, p.precio, p.descripcion, p.FK_id_establecimiento, e.nombre_establecimiento,
         ce.nombre AS categoria,  -- Aquí se agrega la categoría del establecimiento
@@ -67,6 +68,7 @@ class SearchRepository {
         GROUP BY FK_id_producto
       ) mp ON p.id_producto = mp.FK_id_producto
       LEFT JOIN horario_establecimiento h ON e.id_establecimiento = h.id_establecimiento
+      WHERE e.estado = 'Aprobado'
       ORDER BY em.estado ASC
     `);
 
@@ -84,7 +86,7 @@ class SearchRepository {
 
 
    static async getEstablecimientosYProductosActivosForFilter(): Promise<{ establecimientos: any[], productos: any[] }> {
-    // Traer establecimientos con membresía activa
+    // Traer establecimientos con membresía activa Y estado Aprobado
     let innerSql = `
       SELECT e.id_establecimiento, e.nombre_establecimiento, e.descripcion, e.ubicacion,
         ce.id_categoria_establecimiento,
@@ -126,11 +128,12 @@ class SearchRepository {
         FROM puntuacion
         GROUP BY FK_id_establecimiento
       ) punt ON e.id_establecimiento = punt.FK_id_establecimiento
+      WHERE e.estado = 'Aprobado'
     `;
 
     const establecimientos = await db.query(innerSql);
 
-    // Traer productos cuyos establecimientos tengan membresía activa
+    // Traer productos cuyos establecimientos tengan membresía activa Y estado Aprobado
     const productos = await db.query(`
       SELECT p.id_producto, p.nombre, p.precio, p.descripcion, p.FK_id_establecimiento, e.nombre_establecimiento,
         ce.nombre AS categoria,  -- Aquí se agrega la categoría del establecimiento
@@ -148,6 +151,7 @@ class SearchRepository {
         GROUP BY FK_id_producto
       ) mp ON p.id_producto = mp.FK_id_producto
       LEFT JOIN horario_establecimiento h ON e.id_establecimiento = h.id_establecimiento
+      WHERE e.estado = 'Aprobado'
       ORDER BY em.estado ASC
     `);
 
