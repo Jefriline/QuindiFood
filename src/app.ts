@@ -14,6 +14,7 @@ import eventoRoutes from './routes/EventoRoutes/eventoRoutes';
 import adminRoutes from './routes/AdminRoutes/adminRoutes';
 import promocionRoutes from './routes/PromocionRoutes/promocionRoutes';
 import categoriaRoutes from './routes/CategoriaRoutes/categoriaRoutes';
+import aiRoutes from './routes/AIRoutes/aiRoutes';
 dotenv.config();
 
 const app = express().use(bodyParser.json());
@@ -42,6 +43,7 @@ app.use('/evento', eventoRoutes);
 app.use('/admin', adminRoutes);
 app.use('/promocion', promocionRoutes);
 app.use('/categoria', categoriaRoutes);
+app.use('/ai', aiRoutes);
 
 const port = process.env.PORT || 10101;
 
