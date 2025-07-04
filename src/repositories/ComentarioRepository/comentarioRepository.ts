@@ -74,9 +74,22 @@ class ComentarioRepository {
     }
 
     static async getComentariosPrincipalesPaginados(id_establecimiento: number, limit: number, offset: number) {
-        // Obtener comentarios principales (nivel 1) paginados
+        // Obtener comentarios principales (nivel 1) paginados con información del usuario
         const result = await db.query(
-            `SELECT * FROM comentario WHERE fk_id_establecimiento = $1 AND id_comentario_padre IS NULL ORDER BY fecha ASC LIMIT $2 OFFSET $3`,
+            `SELECT 
+                c.id_comentario,
+                c.fk_id_usuario,
+                c.fk_id_establecimiento,
+                c.cuerpo_comentario,
+                c.fecha,
+                c.id_comentario_padre,
+                u.nombre_usuario,
+                u.email
+             FROM comentario c
+             LEFT JOIN usuario_general u ON c.fk_id_usuario = u.id_usuario
+             WHERE c.fk_id_establecimiento = $1 AND c.id_comentario_padre IS NULL 
+             ORDER BY c.fecha ASC 
+             LIMIT $2 OFFSET $3`,
             [id_establecimiento, limit, offset]
         );
         return result.rows;
@@ -101,7 +114,19 @@ class ComentarioRepository {
     static async getRespuestasDeComentarios(ids_comentarios: number[]) {
         if (ids_comentarios.length === 0) return [];
         const result = await db.query(
-            `SELECT * FROM comentario WHERE id_comentario_padre = ANY($1::int[]) ORDER BY fecha ASC`,
+            `SELECT 
+                c.id_comentario,
+                c.fk_id_usuario,
+                c.fk_id_establecimiento,
+                c.cuerpo_comentario,
+                c.fecha,
+                c.id_comentario_padre,
+                u.nombre_usuario,
+                u.email
+             FROM comentario c
+             LEFT JOIN usuario_general u ON c.fk_id_usuario = u.id_usuario
+             WHERE c.id_comentario_padre = ANY($1::int[]) 
+             ORDER BY c.fecha ASC`,
             [ids_comentarios]
         );
         return result.rows;
