@@ -83,7 +83,7 @@ class ComentarioRepository {
                 c.cuerpo_comentario,
                 c.fecha,
                 c.id_comentario_padre,
-                u.nombre_usuario,
+                u.nombre as nombre_usuario,
                 u.email
              FROM comentario c
              LEFT JOIN usuario_general u ON c.fk_id_usuario = u.id_usuario
@@ -121,7 +121,7 @@ class ComentarioRepository {
                 c.cuerpo_comentario,
                 c.fecha,
                 c.id_comentario_padre,
-                u.nombre_usuario,
+                u.nombre as nombre_usuario,
                 u.email
              FROM comentario c
              LEFT JOIN usuario_general u ON c.fk_id_usuario = u.id_usuario
