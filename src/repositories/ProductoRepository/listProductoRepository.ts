@@ -29,10 +29,13 @@ const getProductoById = async (id: number) => {
       COALESCE(mp.imagenes_array, '[]'::json) as imagenes,
       p.FK_id_establecimiento as id_establecimiento,
       e.nombre_establecimiento,
-      em.estado as estado_membresia_establecimiento
+      em.estado as estado_membresia_establecimiento,
+      p.FK_id_categoria_producto as id_categoria,
+      cp.nombre as nombre_categoria
     FROM producto p
     JOIN establecimiento e ON p.FK_id_establecimiento = e.id_establecimiento
     JOIN estado_membresia em ON e.id_establecimiento = em.FK_id_establecimiento
+    LEFT JOIN categoria_producto cp ON p.FK_id_categoria_producto = cp.id_categoria_producto
     LEFT JOIN (
       SELECT FK_id_producto,
         json_agg(json_build_object('id_imagen', id_multimedia_producto, 'imagen', ref_multimedia)) as imagenes_array
