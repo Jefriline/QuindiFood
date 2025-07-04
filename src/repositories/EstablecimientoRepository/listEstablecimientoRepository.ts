@@ -126,7 +126,13 @@ class ListEstablecimientoRepository {
                 em.estado,
                 COALESCE(punt.promedio,0) as promedio_calificacion,
                 COALESCE(punt.total,0) as total_puntuaciones,
-                COALESCE(horarios.horarios_array, '[]'::json) as horarios
+                COALESCE(horarios.horarios_array, '[]'::json) as horarios,
+                json_build_object(
+                    'registro_mercantil', docu.registro_mercantil,
+                    'rut', docu.rut,
+                    'certificado_salud', docu.certificado_salud,
+                    'registro_invima', docu.registro_invima
+                ) as documentos
             FROM establecimiento e
             JOIN estado_membresia em ON e.id_establecimiento = em.FK_id_establecimiento
             JOIN categoria_establecimiento ce ON e.FK_id_categoria_estab = ce.id_categoria_establecimiento
@@ -158,6 +164,16 @@ class ListEstablecimientoRepository {
                 FROM puntuacion
                 GROUP BY FK_id_establecimiento
             ) punt ON e.id_establecimiento = punt.FK_id_establecimiento
+            LEFT JOIN (
+                SELECT 
+                    FK_id_establecimiento,
+                    MAX(registro_mercantil) as registro_mercantil,
+                    MAX(rut) as rut,
+                    MAX(certificado_salud) as certificado_salud,
+                    MAX(registro_invima) as registro_invima
+                FROM documentacion_establecimiento
+                GROUP BY FK_id_establecimiento
+            ) docu ON e.id_establecimiento = docu.FK_id_establecimiento
             WHERE e.id_establecimiento = $1
         `, [id]);
         return result.rows[0];
