@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import ComentarioService from '../../services/ComentarioService/comentarioService';
+import { ActividadService } from '../../services/ActividadService/actividadService';
 import { CustomRequest } from '../../interfaces/customRequest';
 
 const addComentario = async (req: CustomRequest, res: Response) => {
@@ -20,6 +21,17 @@ const addComentario = async (req: CustomRequest, res: Response) => {
             cuerpo_comentario,
             id_comentario_padre ? Number(id_comentario_padre) : undefined
         );
+        
+        // Registrar actividad de nuevo comentario
+        try {
+            await ActividadService.registrarNuevoComentario(
+                Number(id_establecimiento),
+                Number(id_usuario)
+            );
+        } catch (actError) {
+            console.warn('Error al registrar actividad de comentario:', actError);
+            // No fallar la operación principal por esto
+        }
         
         res.status(201).json(resultado);
     } catch (error: any) {
