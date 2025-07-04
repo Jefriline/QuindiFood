@@ -19,12 +19,6 @@ import verifyUserId from '../../middleware/UserValidator/verifyUserId';
 import { onlyPropietario } from '../../middleware/UserValidator/onlyPropietario';
 import { Request, Response, NextFunction } from 'express';
 import simpleUserId from '../../middleware/UserValidator/simpleUserId';
-import { 
-  obtenerEstadisticas, 
-  registrarVistaPerfil, 
-  registrarClicContacto, 
-  exportarDatos 
-} from '../../controllers/EstablecimientoController/estadisticasEstablecimientoController';
 
 const router = express.Router();
 
@@ -106,11 +100,5 @@ router.put('/editar/establecimiento', verifyToken, simpleUserId, onlyPropietario
 router.delete('/eliminar/establecimiento/:id', verifyToken, verifyRole(['ADMIN']), eliminarEstablecimientoAdmin);
 // Eliminar establecimiento (propietario)
 router.delete('/eliminar/mi-establecimiento/:id', verifyToken, eliminarEstablecimientoPropietario);
-
-// Rutas de estadísticas
-router.get('/estadisticas/:idEstablecimiento', verifyToken, obtenerEstadisticas);
-router.post('/actividad/:idEstablecimiento/vista', registrarVistaPerfil); // Puede ser anónimo
-router.post('/actividad/:idEstablecimiento/contacto', registrarClicContacto); // Puede ser anónimo  
-router.get('/estadisticas/:idEstablecimiento/exportar', verifyToken, exportarDatos);
 
 export default router; 
