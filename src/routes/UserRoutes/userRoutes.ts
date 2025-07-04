@@ -35,6 +35,7 @@ import verifyRoleController from '../../controllers/UserController/verifyRoleCon
 import { verifyRoleToken } from '../../middleware/verifyRoleMiddleware';
 import eliminarUsuarioAdmin from '../../controllers/UserController/eliminarUsuarioAdminController';
 import eliminarUsuarioPropio from '../../controllers/UserController/eliminarUsuarioPropioController';
+import registerAsClient from '../../controllers/UserController/registerAsClient';
 const router = express.Router();
 
 // Rutas públicas
@@ -146,5 +147,8 @@ router.post('/verify-role',
 router.delete('/eliminar/usuario/:id', verifyToken, verifyRole(['ADMIN']), eliminarUsuarioAdmin);
 // Eliminar usuario (propio)
 router.delete('/eliminar/mi-usuario', verifyToken, eliminarUsuarioPropio);
+
+// Registrar como cliente
+router.post('/register-as-client', verifyToken, registerAsClient);
 
 export default router; 
