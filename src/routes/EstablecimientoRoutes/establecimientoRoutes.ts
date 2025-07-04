@@ -14,7 +14,7 @@ import eliminarEstablecimientoAdmin from '../../controllers/EstablecimientoContr
 import eliminarEstablecimientoPropietario from '../../controllers/EstablecimientoController/eliminarEstablecimientoPropietarioController';
 import getMiEstablecimiento from '../../controllers/EstablecimientoController/getMiEstablecimientoController';
 import getEstadoEstablecimientoUsuario from '../../controllers/EstablecimientoController/getEstadoEstablecimientoUsuarioController';
-import editarEstablecimiento from '../../controllers/EstablecimientoController/editarEstablecimientoController';
+import editarEstablecimiento from '../../controllers/EstablecimientoController/editarEstablecimientoController_new';
 import verifyUserId from '../../middleware/UserValidator/verifyUserId';
 import { onlyPropietario } from '../../middleware/UserValidator/onlyPropietario';
 import { Request, Response, NextFunction } from 'express';
@@ -27,18 +27,32 @@ const uploadEditarEstablecimiento = multer({
     storage: multer.memoryStorage(),
     limits: {
         fileSize: 10 * 1024 * 1024, // 10MB por archivo
-        files: 10 // Máximo 10 archivos
+        files: 15 // Máximo 15 archivos
     },
     fileFilter: (req, file, cb) => {
-        // Permitir solo imágenes
-        const allowedTypes = /jpeg|jpg|png|gif/;
-        const extname = allowedTypes.test(file.originalname.toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
-        
-        if (mimetype && extname) {
-            return cb(null, true);
+        // Permitir imágenes para fotos y PDFs/imágenes para documentos
+        if (file.fieldname === 'fotos') {
+            const allowedTypes = /jpeg|jpg|png|gif|webp/;
+            const extname = allowedTypes.test(file.originalname.toLowerCase());
+            const mimetype = file.mimetype.startsWith('image/');
+            
+            if (mimetype && extname) {
+                return cb(null, true);
+            } else {
+                return cb(new Error('Las fotos deben ser archivos de imagen'));
+            }
+        } else if (file.fieldname.startsWith('documentacion[') && file.fieldname.endsWith(']')) {
+            const allowedTypes = /pdf|jpeg|jpg|png|gif|webp/;
+            const extname = allowedTypes.test(file.originalname.toLowerCase());
+            const mimetype = file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/');
+            
+            if (mimetype && extname) {
+                return cb(null, true);
+            } else {
+                return cb(new Error('Los documentos deben ser PDF o imágenes'));
+            }
         } else {
-            cb(new Error('Solo se permiten archivos de imagen'));
+            return cb(new Error('Campo no permitido'));
         }
     }
 });
@@ -79,8 +93,8 @@ router.get('/:id', getEstablecimientoById);
 // Ruta para obtener detalle de un establecimiento
 // router.get('/detalle/:id', getDetalleEstablecimiento);
 
-// Editar establecimiento con manejo de archivos
-router.put('/editar/establecimiento', verifyToken, simpleUserId, onlyPropietario, uploadEditarEstablecimiento.array('fotos', 10), editarEstablecimiento);
+// Editar establecimiento - acepta cualquier campo de archivo
+router.put('/editar/establecimiento', verifyToken, simpleUserId, onlyPropietario, uploadEditarEstablecimiento.any(), editarEstablecimiento);
 
 // Eliminar establecimiento (admin)
 router.delete('/eliminar/establecimiento/:id', verifyToken, verifyRole(['ADMIN']), eliminarEstablecimientoAdmin);

@@ -10,8 +10,8 @@ const getMisComentarios = async (req: CustomRequest, res: Response) => {
                 message: 'No autenticado. Debes iniciar sesión para ver tus comentarios.'
             });
         }
-        const comentarios = await ComentarioService.getComentariosByCliente(Number(req.user.id));
-        if (!comentarios || comentarios.length === 0) {
+        const comentarios = await ComentarioService.getComentariosByUsuario(Number(req.user.id));
+        if (!comentarios || comentarios.comentarios.length === 0) {
             return res.status(200).json({
                 status: 'Éxito',
                 message: 'No tienes comentarios registrados.',

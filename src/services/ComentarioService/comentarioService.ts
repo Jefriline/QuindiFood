@@ -16,10 +16,13 @@ class ComentarioService {
         }
     }
 
-    static async deleteComentarioByIdAndCliente(id_comentario: number, id_usuario: number) {
+    static async deleteComentarioByIdAndUsuario(id_comentario: number, id_usuario: number) {
         try {
-            await ComentarioRepository.deleteComentarioByIdAndCliente(id_comentario, id_usuario);
-            return { status: 'Éxito', message: 'Comentario eliminado correctamente' };
+            await ComentarioRepository.deleteComentarioByIdAndUsuario(id_comentario, id_usuario);
+            return {
+                status: 'Éxito',
+                message: 'Comentario eliminado correctamente'
+            };
         } catch (error: any) {
             console.error('Error en el servicio al eliminar comentario:', error);
             throw new Error(error.message || 'Error al eliminar comentario');
@@ -29,49 +32,53 @@ class ComentarioService {
     static async deleteComentarioByIdAdmin(id_comentario: number) {
         try {
             await ComentarioRepository.deleteComentarioByIdAdmin(id_comentario);
-            return { status: 'Éxito', message: 'Comentario eliminado por administrador' };
+            return {
+                status: 'Éxito',
+                message: 'Comentario eliminado correctamente por administrador'
+            };
         } catch (error: any) {
-            console.error('Error en el servicio al eliminar comentario como admin:', error);
-            throw new Error(error.message || 'Error al eliminar comentario como admin');
+            console.error('Error en el servicio al eliminar comentario (admin):', error);
+            throw new Error(error.message || 'Error al eliminar comentario');
         }
     }
 
     static async getComentariosByEstablecimiento(id_establecimiento: number) {
         try {
             const comentarios = await ComentarioRepository.getComentariosByEstablecimiento(id_establecimiento);
-            // Construir árbol de comentarios
-            const map = new Map();
-            comentarios.forEach(c => map.set(c.id_comentario, { ...c, respuestas: [] }));
-            const arbol: any[] = [];
-            comentarios.forEach(c => {
-                if (c.id_comentario_padre) {
-                    map.get(c.id_comentario_padre).respuestas.push(map.get(c.id_comentario));
-                } else {
-                    arbol.push(map.get(c.id_comentario));
-                }
-            });
-            return arbol;
+            if (comentarios.length === 0) {
+                return {
+                    status: 'Éxito',
+                    message: 'No hay comentarios para este establecimiento',
+                    comentarios: []
+                };
+            }
+            return {
+                status: 'Éxito',
+                comentarios
+            };
         } catch (error: any) {
             console.error('Error en el servicio al obtener comentarios de establecimiento:', error);
-            throw new Error(error.message || 'Error al obtener comentarios de establecimiento');
+            throw new Error(error.message || 'Error al obtener comentarios');
         }
     }
 
-    static async getComentariosByCliente(id_usuario: number) {
+    static async getComentariosByUsuario(id_usuario: number) {
         try {
             const comentarios = await ComentarioRepository.getComentariosByCliente(id_usuario);
-            // Formatear respuesta plana con esRespuesta y id_comentario_padre
-            return comentarios.map(c => ({
-                id_comentario: c.id_comentario,
-                FK_id_establecimiento: c.fk_id_establecimiento,
-                cuerpo_comentario: c.cuerpo_comentario,
-                fecha: c.fecha,
-                esRespuesta: c.id_comentario_padre !== null,
-                id_comentario_padre: c.id_comentario_padre
-            }));
+            if (comentarios.length === 0) {
+                return {
+                    status: 'Éxito',
+                    message: 'No tienes comentarios registrados',
+                    comentarios: []
+                };
+            }
+            return {
+                status: 'Éxito',
+                comentarios
+            };
         } catch (error: any) {
-            console.error('Error en el servicio al obtener mis comentarios:', error);
-            throw new Error(error.message || 'Error al obtener mis comentarios');
+            console.error('Error en el servicio al obtener comentarios de usuario:', error);
+            throw new Error(error.message || 'Error al obtener comentarios');
         }
     }
 

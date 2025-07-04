@@ -10,19 +10,19 @@ import getMisComentarios from '../../controllers/ComentarioController/getMisCome
 
 const router = express.Router();
 
-// Solo clientes autenticados pueden añadir comentarios
+// Cualquier usuario autenticado puede añadir comentarios (CLIENTE, PROPIETARIO, ADMIN)
 router.post('/', verifyToken, addComentarioValidator, addComentario);
 
-// Eliminar mi propio comentario (cliente autenticado)
+// Eliminar propio comentario (cualquier usuario autenticado)
 router.delete('/:id_comentario', verifyToken, deleteComentario);
 
 // Eliminar cualquier comentario (solo admin)
 router.delete('/admin/:id_comentario', verifyToken, verifyRole(['ADMIN']), deleteComentarioAdmin);
 
-// Obtener comentarios de un establecimiento (público, árbol)
+// Obtener comentarios de establecimiento (público)
 router.get('/establecimiento/:id_establecimiento', getComentariosEstablecimiento);
 
-// Obtener mis comentarios (token, lista plana)
+// Obtener mis comentarios (cualquier usuario autenticado)
 router.get('/mis-comentarios', verifyToken, getMisComentarios);
 
 export default router; 

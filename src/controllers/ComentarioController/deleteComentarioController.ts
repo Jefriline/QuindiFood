@@ -11,8 +11,8 @@ const deleteComentario = async (req: CustomRequest, res: Response) => {
             });
         }
         const { id_comentario } = req.params;
-        const id_cliente = req.user.id;
-        const resultado = await ComentarioService.deleteComentarioByIdAndCliente(Number(id_comentario), Number(id_cliente));
+        const id_usuario = req.user.id;
+        const resultado = await ComentarioService.deleteComentarioByIdAndUsuario(Number(id_comentario), Number(id_usuario));
         res.status(200).json(resultado);
     } catch (error: any) {
         console.error('Error en el controlador al eliminar comentario:', error);

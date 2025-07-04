@@ -32,6 +32,16 @@ const crearProducto = async (req: Request, res: Response) => {
         if (req.files && Array.isArray(req.files)) {
             const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONECTION_STRING || "");
             const containerClient = blobServiceClient.getContainerClient('productos');
+            
+            // Crear contenedor si no existe
+            try {
+                await containerClient.createIfNotExists({
+                    access: 'blob' // Permite acceso público a los blobs
+                });
+                console.log('✅ Contenedor "productos" verificado/creado');
+            } catch (error) {
+                console.log('⚠️ Error verificando contenedor:', error);
+            }
 
             for (const file of req.files) {
                 const fileName = `${Date.now()}-${file.originalname}`;

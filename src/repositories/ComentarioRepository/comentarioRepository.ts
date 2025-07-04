@@ -3,7 +3,7 @@ import { ComentarioDto } from '../../Dto/ComentarioDto/comentarioDto';
 
 class ComentarioRepository {
     static async addComentario(comentario: ComentarioDto) {
-        // Validar que el cliente existe
+        // Validar que el usuario existe (cualquier rol: CLIENTE, PROPIETARIO, ADMIN)
         const usuario = await db.query('SELECT * FROM usuario_general WHERE id_usuario = $1', [comentario.id_usuario ]);
         if (usuario.rows.length === 0) {
             throw new Error('El usuario no existe');
@@ -32,8 +32,8 @@ class ComentarioRepository {
         return result.rows[0];
     }
 
-    static async deleteComentarioByIdAndCliente(id_comentario: number, id_usuario: number) {
-        // Verificar que el comentario existe y pertenece al cliente
+    static async deleteComentarioByIdAndUsuario(id_comentario: number, id_usuario: number) {
+        // Verificar que el comentario existe y pertenece al usuario (cualquier rol)
         const comentario = await db.query('SELECT * FROM comentario WHERE id_comentario = $1', [id_comentario]);
         if (comentario.rows.length === 0) {
             throw new Error('El comentario no existe');

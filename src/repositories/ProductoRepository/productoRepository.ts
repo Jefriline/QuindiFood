@@ -24,17 +24,10 @@ class ProductoRepository {
             // Insertar multimedia si hay
             if (data.multimedia && data.multimedia.length > 0) {
                 for (const m of data.multimedia) {
-                    if (m.tipo === 'foto') {
-                        await client.query(
-                            `INSERT INTO multimedia_producto (FK_id_producto, tipo, ref_foto) VALUES ($1, $2, $3)`,
-                            [idProducto, m.tipo, m.ref]
-                        );
-                    } else if (m.tipo === 'video') {
-                        await client.query(
-                            `INSERT INTO multimedia_producto (FK_id_producto, tipo, ref_video) VALUES ($1, $2, $3)`,
-                            [idProducto, m.tipo, m.ref]
-                        );
-                    }
+                    await client.query(
+                        `INSERT INTO multimedia_producto (FK_id_producto, tipo, ref_multimedia) VALUES ($1, $2, $3)`,
+                        [idProducto, m.tipo, m.ref]
+                    );
                 }
             }
             
@@ -69,8 +62,7 @@ class ProductoRepository {
                             json_build_object(
                                 'id_multimedia', id_multimedia_producto,
                                 'tipo', tipo,
-                                'ref_foto', ref_foto,
-                                'ref_video', ref_video
+                                'ref_multimedia', ref_multimedia
                             )
                         ) as multimedia_array
                     FROM multimedia_producto
@@ -109,8 +101,7 @@ class ProductoRepository {
                             json_build_object(
                                 'id_multimedia', id_multimedia_producto,
                                 'tipo', tipo,
-                                'ref_foto', ref_foto,
-                                'ref_video', ref_video
+                                'ref_multimedia', ref_multimedia
                             )
                         ) as multimedia_array
                     FROM multimedia_producto
@@ -202,17 +193,10 @@ class ProductoRepository {
             // Agregar nueva multimedia
             if (nuevaMultimedia && nuevaMultimedia.length > 0) {
                 for (const m of nuevaMultimedia) {
-                    if (m.tipo === 'foto') {
-                        await client.query(
-                            `INSERT INTO multimedia_producto (FK_id_producto, tipo, ref_foto) VALUES ($1, $2, $3)`,
-                            [idProducto, m.tipo, m.ref]
-                        );
-                    } else if (m.tipo === 'video') {
-                        await client.query(
-                            `INSERT INTO multimedia_producto (FK_id_producto, tipo, ref_video) VALUES ($1, $2, $3)`,
-                            [idProducto, m.tipo, m.ref]
-                        );
-                    }
+                    await client.query(
+                        `INSERT INTO multimedia_producto (FK_id_producto, tipo, ref_multimedia) VALUES ($1, $2, $3)`,
+                        [idProducto, m.tipo, m.ref]
+                    );
                 }
             }
             
@@ -240,11 +224,20 @@ class ProductoRepository {
                 throw new Error('Producto no encontrado o no tienes permisos');
             }
             
-            // Eliminar el producto (la multimedia se elimina en cascada)
-            await client.query('DELETE FROM producto WHERE id_producto = $1', [idProducto]);
+            // Eliminar multimedia del producto
+            await client.query(
+                'DELETE FROM multimedia_producto WHERE FK_id_producto = $1',
+                [idProducto]
+            );
+            
+            // Eliminar el producto
+            await client.query(
+                'DELETE FROM producto WHERE id_producto = $1',
+                [idProducto]
+            );
             
             await client.query('COMMIT');
-            return { id_producto: idProducto, eliminado: true };
+            return { eliminado: true };
         } catch (error) {
             await client.query('ROLLBACK');
             throw error;
