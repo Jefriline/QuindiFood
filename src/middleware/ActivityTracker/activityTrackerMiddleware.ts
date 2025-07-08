@@ -25,7 +25,7 @@ export const registrarClicPerfil = (req: Request, res: Response, next: NextFunct
             ActivityQueueService.registrarActividad(
                 establecimientoId,
                 usuarioId,
-                'clic_perfil',
+                'click_establecimiento',
                 datosAdicionales
             ).catch(error => {
                 console.error('❌ Error registrando clic en perfil:', error);

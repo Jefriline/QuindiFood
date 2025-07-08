@@ -60,7 +60,8 @@ class EstadisticasRepository {
             actividadResult.rows.forEach((row: any) => {
                 switch (row.tipo_actividad) {
                     case 'clic_perfil':
-                        actividad.clics_perfil = parseInt(row.total);
+                    case 'click_establecimiento':
+                        actividad.clics_perfil += parseInt(row.total);
                         break;
                     case 'comentario':
                         actividad.comentarios_totales = parseInt(row.total);

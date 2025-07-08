@@ -181,7 +181,9 @@ class EstadisticasService {
 
         const labels = totalesPorTipo.map(item => {
             switch (item.tipo) {
-                case 'clic_perfil': return 'Clics en Perfil';
+                case 'clic_perfil':
+                case 'click_establecimiento':
+                    return 'Clics en Perfil';
                 case 'comentario': return 'Comentarios';
                 case 'favorito': return 'Favoritos';
                 case 'puntuacion': return 'Puntuaciones';
@@ -190,7 +192,15 @@ class EstadisticasService {
             }
         });
 
-        const data = totalesPorTipo.map(item => item.total);
+        // Sumar ambos tipos para la gráfica
+        const data = totalesPorTipo.reduce((acc, item) => {
+            if (item.tipo === 'clic_perfil' || item.tipo === 'click_establecimiento') {
+                acc[0] = (acc[0] || 0) + item.total;
+            } else {
+                acc.push(item.total);
+            }
+            return acc;
+        }, [] as number[]);
 
         return {
             labels,
