@@ -5,7 +5,10 @@ import { DocumentacionDto } from '../../Dto/EstablecimientoDto/documentacionDto'
 import { EstadoMembresiaDto } from '../../Dto/EstablecimientoDto/estadoMembresiaDto';
 import EstablecimientoService from '../../services/EstablecimientoService/establecimientoService';
 import { BlobServiceClient, BlobSASPermissions } from '@azure/storage-blob';
+import fetch from 'node-fetch';
+import UserService from '../../services/userServices/UserService';
 
+const PLAN_ID_PREMIUM = '2c93808497e081eb0197e8e83f4d0380'; // ID generado por Mercado Pago
 
 const registerEstablecimiento = async (req: Request, res: Response) => {
     try {
@@ -16,7 +19,8 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
             contacto,
             descripcion,
             FK_id_categoria_estab,
-            horarios
+            horarios,
+            plan
         } = req.body;
 
         // Tomar el id del usuario autenticado directamente
@@ -144,7 +148,11 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
         );
         
         // Estado de membresía por defecto: Inactivo (gratuito)
-        const estadoMembresiaDto = new EstadoMembresiaDto('Inactivo');
+        let estadoMembresia = 'Inactivo';
+        if (plan === 'premium') {
+            estadoMembresia = 'Activo';
+        }
+        const estadoMembresiaDto = new EstadoMembresiaDto(estadoMembresia);
 
         // Parsear el campo horarios
         let horariosArray = [];
@@ -173,9 +181,75 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
             horariosArray
         );
 
+        // Si es premium, crear la suscripción en Mercado Pago y devolver el init_point
+        if (plan === 'premium') {
+            // Obtener email del usuario autenticado por su id
+            const userEmail = await UserService.getEmailById(FK_id_usuario);
+            try {
+                const response = await fetch('https://api.mercadopago.com/preapproval', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${process.env.ACCESS_TOKEN_MERCADOPAGO}`
+                    },
+                    body: JSON.stringify({
+                        preapproval_plan_id: PLAN_ID_PREMIUM,
+                        payer_email: userEmail,
+                        back_url: "https://quindifood.com/registro-exitoso",
+                        reason: 'Membresía Premium QuindiFood'
+                    })
+                });
+                const data = await response.json();
+                if (response.ok && data.init_point && data.id) {
+                    // Asociar el preapproval_id al establecimiento
+                    await EstablecimientoService.asociarPreapprovalId(resultado.id_establecimiento, data.id);
+                    return res.status(201).json({
+                        success: true,
+                        message: 'Tu solicitud de establecimiento está en revisión. Pronto recibirás una respuesta del equipo de QuindiFood.',
+                        init_point: data.init_point,
+                        data: {
+                            id_establecimiento: resultado.id_establecimiento,
+                            nombre_establecimiento,
+                            estado: 'Pendiente',
+                            estado_membresia: 'Activo',
+                            fotos_subidas: fotosUrls.length,
+                            documentos_subidos: Object.keys(documentosUrls).length
+                        }
+                    });
+                } else {
+                    return res.status(201).json({
+                        success: true,
+                        message: 'Tu solicitud de establecimiento está en revisión. Pronto recibirás una respuesta del equipo de QuindiFood.',
+                        data: {
+                            id_establecimiento: resultado.id_establecimiento,
+                            nombre_establecimiento,
+                            estado: 'Pendiente',
+                            estado_membresia: 'Activo',
+                            fotos_subidas: fotosUrls.length,
+                            documentos_subidos: Object.keys(documentosUrls).length
+                        }
+                    });
+                }
+            } catch (error) {
+                return res.status(201).json({
+                    success: true,
+                    message: 'Tu solicitud de establecimiento está en revisión. Pronto recibirás una respuesta del equipo de QuindiFood.',
+                    data: {
+                        id_establecimiento: resultado.id_establecimiento,
+                        nombre_establecimiento,
+                        estado: 'Pendiente',
+                        estado_membresia: 'Activo',
+                        fotos_subidas: fotosUrls.length,
+                        documentos_subidos: Object.keys(documentosUrls).length
+                    }
+                });
+            }
+        }
+
+        // Si es gratis o cualquier otro caso
         return res.status(201).json({
             success: true,
-            message: 'Establecimiento registrado exitosamente. Pendiente de aprobación por administrador.',
+            message: 'Tu solicitud de establecimiento está en revisión. Pronto recibirás una respuesta del equipo de QuindiFood.',
             data: {
                 id_establecimiento: resultado.id_establecimiento,
                 nombre_establecimiento,

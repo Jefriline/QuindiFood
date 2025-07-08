@@ -17,6 +17,7 @@ import categoriaRoutes from './routes/CategoriaRoutes/categoriaRoutes';
 import aiRoutes from './routes/AIRoutes/aiRoutes'; // Comentado temporalmente
 import estadisticasRoutes from './routes/EstadisticasRoutes/estadisticasRoutes';
 import { WorkerManager } from './workers/workerManager';
+import mercadoPagoWebhook from './controllers/WebhookController/mercadoPagoWebhook';
 dotenv.config();
 
 const app = express().use(bodyParser.json());
@@ -47,6 +48,7 @@ app.use('/promocion', promocionRoutes);
 app.use('/categoria', categoriaRoutes);
 app.use('/ai', aiRoutes);
 app.use('/estadisticas', estadisticasRoutes);
+app.post('/webhook/mercadopago', mercadoPagoWebhook);
 
 const port = process.env.PORT || 10101;
 

@@ -318,6 +318,15 @@ class UserRepository {
       client.release();
     }
   }
+
+  static async getEmailById(id: number): Promise<string | null> {
+    const sql = 'SELECT email FROM usuario_general WHERE id_usuario = $1';
+    const result = await db.query(sql, [id]);
+    if (result.rows.length > 0) {
+      return result.rows[0].email;
+    }
+    return null;
+  }
 }
 
 export default UserRepository;

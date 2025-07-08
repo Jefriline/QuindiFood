@@ -282,6 +282,10 @@ class UserService {
             };
         }
     }
+
+    static async getEmailById(id: number): Promise<string | null> {
+        return await UserRepository.getEmailById(id);
+    }
 }
 
 export default UserService;

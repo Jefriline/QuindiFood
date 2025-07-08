@@ -572,6 +572,40 @@ class EstablecimientoRepository {
             throw error;
         }
     }
+
+    static async activarMembresiaPorPreapproval(preapprovalId: string) {
+        const client = await db.connect();
+        try {
+            await client.query('BEGIN');
+            // Buscar el establecimiento por preapproval_id
+            const result = await client.query(
+                `SELECT id_establecimiento FROM establecimiento WHERE preapproval_id = $1`,
+                [preapprovalId]
+            );
+            if (result.rowCount === 0) throw new Error('No se encontró establecimiento con ese preapproval_id');
+            const idEstablecimiento = result.rows[0].id_establecimiento;
+            // Actualizar la membresía a 'Activo'
+            await client.query(
+                `UPDATE estado_membresia SET estado = 'Activo' WHERE FK_id_establecimiento = $1`,
+                [idEstablecimiento]
+            );
+            await client.query('COMMIT');
+            return { id_establecimiento: idEstablecimiento, estado_membresia: 'Activo' };
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
+    static async asociarPreapprovalId(idEstablecimiento: number, preapprovalId: string) {
+        await db.query(
+            'UPDATE establecimiento SET preapproval_id = $1 WHERE id_establecimiento = $2',
+            [preapprovalId, idEstablecimiento]
+        );
+        return { id_establecimiento: idEstablecimiento, preapproval_id: preapprovalId };
+    }
 }
 
 export default EstablecimientoRepository; 

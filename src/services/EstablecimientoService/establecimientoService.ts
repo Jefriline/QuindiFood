@@ -138,6 +138,24 @@ export class EstablecimientoService {
             throw error;
         }
     }
+
+    static async activarMembresiaPorPreapproval(preapprovalId: string) {
+        try {
+            return await EstablecimientoRepository.activarMembresiaPorPreapproval(preapprovalId);
+        } catch (error) {
+            console.error('Error en el servicio al activar membresía por preapproval:', error);
+            throw error;
+        }
+    }
+
+    static async asociarPreapprovalId(idEstablecimiento: number, preapprovalId: string) {
+        try {
+            return await EstablecimientoRepository.asociarPreapprovalId(idEstablecimiento, preapprovalId);
+        } catch (error) {
+            console.error('Error en el servicio al asociar preapproval_id:', error);
+            throw error;
+        }
+    }
 }
 
 export default EstablecimientoService; 
