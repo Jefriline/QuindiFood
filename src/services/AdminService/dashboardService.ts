@@ -3,42 +3,8 @@ import DashboardRepository from '../../repositories/AdminRepository/dashboardRep
 class DashboardService {
     static async getDashboardStats() {
         try {
-            // Ejecutar todas las consultas en paralelo para máxima velocidad
-            const [establecimientos, comentarios, usuarios, categorias, visitas_establecimientos] = await Promise.all([
-                DashboardRepository.getEstablecimientosStats(),
-                DashboardRepository.getComentariosStats(),
-                DashboardRepository.getUsuariosStats(),
-                DashboardRepository.getCategoriasStats(),
-                DashboardRepository.getTotalVisitasEstablecimientos()
-            ]);
-
-            return {
-                success: true,
-                data: {
-                    establecimientos: {
-                        total: parseInt(establecimientos.total) || 0,
-                        activos: parseInt(establecimientos.activos) || 0,
-                        suspendidos: parseInt(establecimientos.suspendidos) || 0,
-                        pendientes: parseInt(establecimientos.pendientes) || 0,
-                        nuevos: parseInt(establecimientos.nuevos) || 0
-                    },
-                    comentarios: {
-                        total: parseInt(comentarios.total) || 0,
-                        reportados: parseInt(comentarios.reportados) || 0
-                    },
-                    usuarios: {
-                        total: parseInt(usuarios.total) || 0,
-                        activos: parseInt(usuarios.activos) || 0,
-                        inactivos: parseInt(usuarios.inactivos) || 0,
-                        nuevos: parseInt(usuarios.nuevos) || 0
-                    },
-                    categorias: {
-                        establecimiento: parseInt(categorias.total_estab) || 0,
-                        producto: parseInt(categorias.total_prod) || 0
-                    },
-                    visitas_establecimientos: visitas_establecimientos || 0
-                }
-            };
+            const stats = await DashboardRepository.getDashboardStats();
+            return stats;
         } catch (error) {
             console.error('Error en DashboardService.getDashboardStats:', error);
             return {

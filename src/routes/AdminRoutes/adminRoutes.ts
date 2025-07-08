@@ -22,4 +22,4 @@ router.get('/dashboard/stats', verifyToken, verifyRole(['ADMIN']), getDashboardS
 router.get('/dashboard/activities', verifyToken, verifyRole(['ADMIN']), getDashboardActivities);
 router.get('/dashboard/establecimientos', verifyToken, verifyRole(['ADMIN']), getControlEstablecimientos);
 
-export default router; 
+export default router;

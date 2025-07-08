@@ -108,7 +108,7 @@
   },
   "include": [
     "src/**/*"
-  ],
+, "FrontEnd-QuindiFood/src/Components/Page/Admin/DashboardAdmin.jsx", "FrontEnd-QuindiFood/src/Components/Page/Admin/GestionEventos.jsx", "FrontEnd-QuindiFood/src/Components/Page/Admin/GestionComentarios.jsx", "FrontEnd-QuindiFood/src/Components/Page/Admin/SolicitudesEstablecimientos.jsx", "FrontEnd-QuindiFood/src/Components/Page/Admin/GestionCategorias.jsx", "FrontEnd-QuindiFood/src/Components/Page/Admin/AdminLayout.jsx"  ],
   "exclude": [
     "node_modules",
     "dist"

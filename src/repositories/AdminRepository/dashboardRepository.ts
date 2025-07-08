@@ -200,6 +200,33 @@ class DashboardRepository {
             throw error;
         }
     }
+
+    static async getDashboardStats() {
+        try {
+            // Ejecutar todas las consultas en paralelo
+            const [usuariosAprobados, usuariosPendientes, totalComentarios, establecimientosPendientes, establecimientosRechazados, establecimientosMembresiaActiva, totalClicks] = await Promise.all([
+                db.query(`SELECT COUNT(*)::int as total FROM usuario_general WHERE estado = 'Aprobado'`),
+                db.query(`SELECT COUNT(*)::int as total FROM usuario_general WHERE estado = 'Pendiente'`),
+                db.query(`SELECT COUNT(*)::int as total FROM comentario`),
+                db.query(`SELECT COUNT(*)::int as total FROM establecimiento WHERE estado = 'Pendiente'`),
+                db.query(`SELECT COUNT(*)::int as total FROM establecimiento WHERE estado = 'Rechazado'`),
+                db.query(`SELECT COUNT(DISTINCT FK_id_establecimiento)::int as total FROM estado_membresia WHERE estado = 'Activo'`),
+                db.query(`SELECT COUNT(*)::int as total FROM actividad_establecimiento WHERE tipo_actividad = 'click_establecimiento'`)
+            ]);
+            return {
+                usuarios_aprobados: usuariosAprobados.rows[0].total,
+                usuarios_pendientes: usuariosPendientes.rows[0].total,
+                total_comentarios: totalComentarios.rows[0].total,
+                establecimientos_pendientes: establecimientosPendientes.rows[0].total,
+                establecimientos_rechazados: establecimientosRechazados.rows[0].total,
+                establecimientos_membresia_activa: establecimientosMembresiaActiva.rows[0].total,
+                interacciones_establecimientos: totalClicks.rows[0].total
+            };
+        } catch (error) {
+            console.error('Error al obtener estadísticas del dashboard:', error);
+            throw error;
+        }
+    }
 }
 
 export default DashboardRepository; 
