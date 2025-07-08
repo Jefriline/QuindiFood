@@ -56,9 +56,12 @@ class ComentarioRepository {
     }
 
     static async getComentariosByEstablecimiento(id_establecimiento: number) {
-        // Obtener todos los comentarios del establecimiento
+        // Obtener todos los comentarios del establecimiento con foto de perfil
         const result = await db.query(
-            `SELECT * FROM comentario WHERE fk_id_establecimiento = $1 ORDER BY fecha ASC`,
+            `SELECT c.*, u.nombre as nombre_usuario, u.email, u.foto_perfil
+             FROM comentario c
+             LEFT JOIN usuario_general u ON c.fk_id_usuario = u.id_usuario
+             WHERE c.fk_id_establecimiento = $1 ORDER BY c.fecha ASC`,
             [id_establecimiento]
         );
         return result.rows;
@@ -74,7 +77,7 @@ class ComentarioRepository {
     }
 
     static async getComentariosPrincipalesPaginados(id_establecimiento: number, limit: number, offset: number) {
-        // Obtener comentarios principales (nivel 1) paginados con información del usuario
+        // Obtener comentarios principales (nivel 1) paginados con información del usuario y foto
         const result = await db.query(
             `SELECT 
                 c.id_comentario,
@@ -84,7 +87,8 @@ class ComentarioRepository {
                 c.fecha,
                 c.id_comentario_padre,
                 u.nombre as nombre_usuario,
-                u.email
+                u.email,
+                u.foto_perfil
              FROM comentario c
              LEFT JOIN usuario_general u ON c.fk_id_usuario = u.id_usuario
              WHERE c.fk_id_establecimiento = $1 AND c.id_comentario_padre IS NULL 
@@ -122,7 +126,8 @@ class ComentarioRepository {
                 c.fecha,
                 c.id_comentario_padre,
                 u.nombre as nombre_usuario,
-                u.email
+                u.email,
+                u.foto_perfil
              FROM comentario c
              LEFT JOIN usuario_general u ON c.fk_id_usuario = u.id_usuario
              WHERE c.id_comentario_padre = ANY($1::int[]) 

@@ -5,6 +5,7 @@ import listarMisPromociones from '../../controllers/PromocionController/listarMi
 import editarPromocion from '../../controllers/PromocionController/editarPromocionController';
 import eliminarPromocion from '../../controllers/PromocionController/eliminarPromocionController';
 import listarPromocionesActivas from '../../controllers/PromocionController/listarPromocionesActivasController';
+import detallePromocionPublica from '../../controllers/PromocionController/detallePromocionPublicaController';
 import { 
     validarCrearPromocionCompleto, 
     validarEditarPromocionCompleto, 
@@ -37,6 +38,7 @@ const upload = multer({
 
 // Rutas públicas
 router.get('/activas', listarPromocionesActivas);
+router.get('/:id', detallePromocionPublica);
 
 // Rutas protegidas para propietarios - ANTES de /:id
 router.post('/crear', upload.single('imagen_promocional'), validarCrearPromocionCompleto, crearPromocion);

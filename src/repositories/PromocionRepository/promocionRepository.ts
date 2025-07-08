@@ -241,6 +241,28 @@ class PromocionRepository {
             throw error;
         }
     }
+
+    static async getPromocionPublicaById(idPromocion: number) {
+        try {
+            const sql = `
+                SELECT 
+                    p.id_promocion,
+                    p.FK_id_establecimiento as id_establecimiento,
+                    p.encabezado,
+                    p.descripcion,
+                    p.imagen_promocional,
+                    p.fecha_inicio,
+                    p.fecha_fin
+                FROM promocion p
+                WHERE p.id_promocion = $1
+            `;
+            const result = await db.query(sql, [idPromocion]);
+            return result.rows[0] || null;
+        } catch (error) {
+            console.error('Error al obtener promoción pública por ID:', error);
+            throw error;
+        }
+    }
 }
 
 export default PromocionRepository; 
