@@ -4,11 +4,12 @@ class DashboardService {
     static async getDashboardStats() {
         try {
             // Ejecutar todas las consultas en paralelo para máxima velocidad
-            const [establecimientos, comentarios, usuarios, categorias] = await Promise.all([
+            const [establecimientos, comentarios, usuarios, categorias, visitas_establecimientos] = await Promise.all([
                 DashboardRepository.getEstablecimientosStats(),
                 DashboardRepository.getComentariosStats(),
                 DashboardRepository.getUsuariosStats(),
-                DashboardRepository.getCategoriasStats()
+                DashboardRepository.getCategoriasStats(),
+                DashboardRepository.getTotalVisitasEstablecimientos()
             ]);
 
             return {
@@ -34,7 +35,8 @@ class DashboardService {
                     categorias: {
                         establecimiento: parseInt(categorias.total_estab) || 0,
                         producto: parseInt(categorias.total_prod) || 0
-                    }
+                    },
+                    visitas_establecimientos: visitas_establecimientos || 0
                 }
             };
         } catch (error) {

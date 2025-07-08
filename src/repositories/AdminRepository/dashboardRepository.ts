@@ -186,6 +186,20 @@ class DashboardRepository {
             return [];
         }
     }
+
+    static async getTotalVisitasEstablecimientos() {
+        try {
+            const result = await db.query(`
+                SELECT COUNT(*) as total
+                FROM actividad_establecimiento
+                WHERE tipo_actividad = 'click_establecimiento'
+            `);
+            return parseInt(result.rows[0].total, 10) || 0;
+        } catch (error) {
+            console.error('Error al obtener total de visitas a establecimientos:', error);
+            throw error;
+        }
+    }
 }
 
 export default DashboardRepository; 

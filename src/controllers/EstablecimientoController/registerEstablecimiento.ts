@@ -8,7 +8,7 @@ import { BlobServiceClient, BlobSASPermissions } from '@azure/storage-blob';
 import fetch from 'node-fetch';
 import UserService from '../../services/userServices/UserService';
 
-const PLAN_ID_PREMIUM = '2c93808497e081eb0197e8e83f4d0380'; // ID generado por Mercado Pago
+const PLAN_ID_PREMIUM = '2c93808497e081eb0197e9430c64038c'; // ID generado por Mercado Pago
 
 const registerEstablecimiento = async (req: Request, res: Response) => {
     try {
@@ -186,6 +186,12 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
             // Obtener email del usuario autenticado por su id
             const userEmail = await UserService.getEmailById(FK_id_usuario);
             try {
+                const isTest = 'true'; 
+
+                const payer_email = isTest
+                    ? 'TESTUSER923920023@testuser.com' // correo de prueba comprador Mercado Pago
+                    : userEmail; // correo real del usuario
+
                 const response = await fetch('https://api.mercadopago.com/preapproval', {
                     method: 'POST',
                     headers: {
@@ -193,13 +199,19 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                         'Authorization': `Bearer ${process.env.ACCESS_TOKEN_MERCADOPAGO}`
                     },
                     body: JSON.stringify({
-                        preapproval_plan_id: PLAN_ID_PREMIUM,
-                        payer_email: userEmail,
-                        back_url: "https://quindifood.com/registro-exitoso",
-                        reason: 'Membresía Premium QuindiFood'
+                        payer_email,
+                        back_url: "https://type-mega-win-enquiry.trycloudflare.com/registro-exitoso",
+                        reason: 'Membresía Premium QuindiFood',
+                        auto_recurring: {
+                            frequency: 1,
+                            frequency_type: "months",
+                            transaction_amount: 35000, // o el valor de tu membresía
+                            currency_id: "COP"
+                        }
                     })
                 });
                 const data = await response.json();
+                console.log('Respuesta Mercado Pago preapproval:', data);
                 if (response.ok && data.init_point && data.id) {
                     // Asociar el preapproval_id al establecimiento
                     await EstablecimientoService.asociarPreapprovalId(resultado.id_establecimiento, data.id);
@@ -217,31 +229,19 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                         }
                     });
                 } else {
-                    return res.status(201).json({
-                        success: true,
-                        message: 'Tu solicitud de establecimiento está en revisión. Pronto recibirás una respuesta del equipo de QuindiFood.',
-                        data: {
-                            id_establecimiento: resultado.id_establecimiento,
-                            nombre_establecimiento,
-                            estado: 'Pendiente',
-                            estado_membresia: 'Activo',
-                            fotos_subidas: fotosUrls.length,
-                            documentos_subidos: Object.keys(documentosUrls).length
-                        }
+                    // Si falla la creación de la suscripción, eliminar el registro creado
+                    await EstablecimientoService.eliminarEstablecimientoCompleto(resultado.id_establecimiento, FK_id_usuario, false);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'No se pudo iniciar el proceso de pago premium. Intenta de nuevo o contacta soporte.'
                     });
                 }
             } catch (error) {
-                return res.status(201).json({
-                    success: true,
-                    message: 'Tu solicitud de establecimiento está en revisión. Pronto recibirás una respuesta del equipo de QuindiFood.',
-                    data: {
-                        id_establecimiento: resultado.id_establecimiento,
-                        nombre_establecimiento,
-                        estado: 'Pendiente',
-                        estado_membresia: 'Activo',
-                        fotos_subidas: fotosUrls.length,
-                        documentos_subidos: Object.keys(documentosUrls).length
-                    }
+                // Si ocurre un error, eliminar el registro creado
+                await EstablecimientoService.eliminarEstablecimientoCompleto(resultado.id_establecimiento, FK_id_usuario, false);
+                return res.status(500).json({
+                    success: false,
+                    message: 'No se pudo iniciar el proceso de pago premium. Intenta de nuevo o contacta soporte.'
                 });
             }
         }

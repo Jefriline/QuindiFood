@@ -17,12 +17,13 @@ async function crearPlan() {
           transaction_amount: 25000,
           currency_id: "COP"
         },
-        back_url: "https://quindifood.com/registro-exitoso"
+        back_url: "https://type-mega-win-enquiry.trycloudflare.com/registro-exitoso"
       })
     });
     const data = await response.json();
     if (response.ok) {
       console.log("Plan creado:", data.id);
+      console.log("Plan completo:", data);
     } else {
       console.error("Error al crear el plan:", data);
     }
