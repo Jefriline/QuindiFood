@@ -15,6 +15,8 @@ import adminRoutes from './routes/AdminRoutes/adminRoutes';
 import promocionRoutes from './routes/PromocionRoutes/promocionRoutes';
 import categoriaRoutes from './routes/CategoriaRoutes/categoriaRoutes';
 import aiRoutes from './routes/AIRoutes/aiRoutes'; // Comentado temporalmente
+import estadisticasRoutes from './routes/EstadisticasRoutes/estadisticasRoutes';
+import { WorkerManager } from './workers/workerManager';
 dotenv.config();
 
 const app = express().use(bodyParser.json());
@@ -44,11 +46,21 @@ app.use('/admin', adminRoutes);
 app.use('/promocion', promocionRoutes);
 app.use('/categoria', categoriaRoutes);
 app.use('/ai', aiRoutes);
+app.use('/estadisticas', estadisticasRoutes);
 
 const port = process.env.PORT || 10101;
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`Servidor corriendo en el puerto ${port}`);
+  
+  // Inicializar workers después de que el servidor esté listo
+  try {
+    await WorkerManager.initialize();
+    console.log('🎉 Sistema completo iniciado exitosamente');
+  } catch (error) {
+    console.error('❌ Error inicializando workers:', error);
+    // El servidor puede continuar funcionando sin workers si es necesario
+  }
 }).on("error", (error) => {
   throw new Error(error.message);
 });

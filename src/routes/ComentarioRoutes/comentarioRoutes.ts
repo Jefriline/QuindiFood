@@ -7,11 +7,12 @@ import deleteComentarioAdmin from '../../controllers/ComentarioController/delete
 import verifyRole from '../../middleware/UserValidator/verifyRole';
 import getComentariosEstablecimiento from '../../controllers/ComentarioController/getComentariosEstablecimientoController';
 import getMisComentarios from '../../controllers/ComentarioController/getMisComentariosController';
+import { registrarComentario } from '../../middleware/ActivityTracker/activityTrackerMiddleware';
 
 const router = express.Router();
 
 // Cualquier usuario autenticado puede añadir comentarios (CLIENTE, PROPIETARIO, ADMIN)
-router.post('/', verifyToken, addComentarioValidator, addComentario);
+router.post('/', verifyToken, addComentarioValidator, registrarComentario, addComentario);
 
 // Eliminar propio comentario (cualquier usuario autenticado)
 router.delete('/:id_comentario', verifyToken, deleteComentario);

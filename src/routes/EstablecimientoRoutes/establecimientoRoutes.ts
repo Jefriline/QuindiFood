@@ -19,6 +19,7 @@ import verifyUserId from '../../middleware/UserValidator/verifyUserId';
 import { onlyPropietario } from '../../middleware/UserValidator/onlyPropietario';
 import { Request, Response, NextFunction } from 'express';
 import simpleUserId from '../../middleware/UserValidator/simpleUserId';
+import { trackEstablecimientoAccess } from '../../middleware/ActivityTracker/activityTrackerMiddleware';
 
 const router = express.Router();
 
@@ -87,8 +88,8 @@ router.get('/estado-establecimiento',
 // Estas rutas específicas ANTES de /:id
 router.get('/disponibilidad/:id', getEstadoEstablecimiento);
 
-// Ruta genérica /:id DEBE IR AL FINAL
-router.get('/:id', getEstablecimientoById);
+// Ruta genérica /:id DEBE IR AL FINAL (con tracking de actividad)
+router.get('/:id', simpleUserId, trackEstablecimientoAccess, getEstablecimientoById);
 
 // Ruta para obtener detalle de un establecimiento
 // router.get('/detalle/:id', getDetalleEstablecimiento);
