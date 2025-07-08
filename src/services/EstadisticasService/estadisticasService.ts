@@ -32,18 +32,12 @@ class EstadisticasService {
             // Obtener todas las estadísticas en paralelo
             const [
                 estadisticasGenerales,
-                actividadDiaria,
                 totalesPorTipo,
                 tendencias
             ] = await Promise.all([
                 EstadisticasRepository.getEstadisticasGenerales(
                     establecimientoInfo.id, 
                     fechaInicio, 
-                    fechaFin
-                ),
-                EstadisticasRepository.getActividadDiaria(
-                    establecimientoInfo.id,
-                    fechaInicio,
                     fechaFin
                 ),
                 EstadisticasRepository.getTotalesPorTipoActividad(
@@ -54,15 +48,15 @@ class EstadisticasService {
                 EstadisticasRepository.getTendencias(establecimientoInfo.id)
             ]);
 
-            // Generar gráficas
-            const graficaActividad = this.generarGraficaBarras(actividadDiaria);
+            // Generar gráfico circular solo con clics, comentarios y favoritos
             const graficoInteracciones = this.generarGraficoCircular(totalesPorTipo);
 
+            // Devolver los campos requeridos por el DTO, pero solo con datos útiles
             const dashboard: DashboardEstadisticasDto = {
                 estadisticas_generales: estadisticasGenerales,
-                grafica_actividad: graficaActividad,
+                grafica_actividad: { labels: [], datasets: [{ label: '', data: [], backgroundColor: '', borderColor: '', borderWidth: 0 }] }, // vacío
                 grafico_interacciones: graficoInteracciones,
-                actividad_reciente: actividadDiaria.slice(-7), // Últimos 7 días
+                actividad_reciente: [], // vacío
                 tendencias
             };
 
@@ -166,48 +160,25 @@ class EstadisticasService {
         const colores = [
             'rgba(255, 107, 107, 0.8)',  // Rojo
             'rgba(54, 162, 235, 0.8)',   // Azul
-            'rgba(255, 193, 7, 0.8)',    // Amarillo
-            'rgba(40, 167, 69, 0.8)',    // Verde
-            'rgba(156, 39, 176, 0.8)'    // Morado
+            'rgba(40, 167, 69, 0.8)'     // Verde
         ];
-
         const bordColores = [
             'rgba(255, 107, 107, 1)',
             'rgba(54, 162, 235, 1)',
-            'rgba(255, 193, 7, 1)',
-            'rgba(40, 167, 69, 1)',
-            'rgba(156, 39, 176, 1)'
+            'rgba(40, 167, 69, 1)'
         ];
-
-        const labels = totalesPorTipo.map(item => {
-            switch (item.tipo) {
-                case 'clic_perfil':
-                case 'click_establecimiento':
-                    return 'Clics en Perfil';
-                case 'comentario': return 'Comentarios';
-                case 'favorito': return 'Favoritos';
-                case 'puntuacion': return 'Puntuaciones';
-                case 'busqueda': return 'Búsquedas';
-                default: return item.tipo;
-            }
+        let clics = 0, comentarios = 0, favoritos = 0;
+        totalesPorTipo.forEach(item => {
+            if (item.tipo === 'clic_perfil' || item.tipo === 'click_establecimiento') clics += item.total;
+            if (item.tipo === 'comentario') comentarios += item.total;
+            if (item.tipo === 'favorito') favoritos += item.total;
         });
-
-        // Sumar ambos tipos para la gráfica
-        const data = totalesPorTipo.reduce((acc, item) => {
-            if (item.tipo === 'clic_perfil' || item.tipo === 'click_establecimiento') {
-                acc[0] = (acc[0] || 0) + item.total;
-            } else {
-                acc.push(item.total);
-            }
-            return acc;
-        }, [] as number[]);
-
         return {
-            labels,
+            labels: ['Clics', 'Comentarios', 'Favoritos'],
             datasets: [{
-                data,
-                backgroundColor: colores.slice(0, labels.length),
-                borderColor: bordColores.slice(0, labels.length),
+                data: [clics, comentarios, favoritos],
+                backgroundColor: colores,
+                borderColor: bordColores,
                 borderWidth: 2
             }]
         };
@@ -269,6 +240,40 @@ class EstadisticasService {
             console.error('❌ Error obteniendo establecimiento del usuario:', error);
             return null;
         }
+    }
+
+    // Obtener actividad reciente (feed para dashboard)
+    static async getActividadReciente(usuarioId: number): Promise<any[]> {
+        const establecimientoInfo = await this.getEstablecimientoUsuario(usuarioId);
+        if (!establecimientoInfo) return [];
+        const eventos = await EstadisticasRepository.getActividadReciente(establecimientoInfo.id);
+        return eventos.map(ev => {
+            let descripcion = '';
+            switch (ev.tipo_actividad) {
+                case 'click_establecimiento':
+                case 'clic_perfil':
+                    descripcion = 'Nuevo clic en el perfil';
+                    break;
+                case 'favorito':
+                    descripcion = 'Nuevo favorito agregado';
+                    break;
+                case 'comentario':
+                    descripcion = 'Nuevo comentario recibido';
+                    break;
+                case 'puntuacion':
+                    descripcion = 'Nueva puntuación recibida';
+                    break;
+                default:
+                    descripcion = ev.tipo_actividad;
+            }
+            return {
+                tipo: ev.tipo_actividad,
+                usuario: ev.fk_id_usuario,
+                fecha: ev.fecha_actividad,
+                descripcion,
+                datos: ev.datos_adicionales
+            };
+        });
     }
 }
 

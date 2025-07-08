@@ -23,7 +23,6 @@ export interface EstadisticasGeneralesDto {
         clics_perfil: number;
         comentarios_totales: number;
         favoritos_totales: number;
-        busquedas: number;
     };
     comentarios: {
         total: number;
@@ -70,7 +69,6 @@ export interface ActividadDiariaDto {
     comentarios: number;
     puntuaciones: number;
     favoritos: number;
-    busquedas: number;
     total: number;
 }
 

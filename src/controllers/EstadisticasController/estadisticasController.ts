@@ -43,7 +43,7 @@ export const getDashboardEstadisticas = async (req: Request, res: Response) => {
         return res.status(500).json({
             success: false,
             message: 'Error interno del servidor al obtener estadísticas',
-            error: error?.message || 'Error desconocido'
+            error: (typeof error === 'object' && error !== null && 'message' in error) ? (error as any).message : String(error) || 'Error desconocido'
         });
     }
 };
@@ -94,7 +94,7 @@ export const exportarEstadisticas = async (req: Request, res: Response) => {
         return res.status(500).json({
             success: false,
             message: 'Error interno del servidor al exportar estadísticas',
-            error: error?.message || 'Error desconocido'
+            error: (typeof error === 'object' && error !== null && 'message' in error) ? (error as any).message : String(error) || 'Error desconocido'
         });
     }
 };
@@ -143,48 +143,32 @@ export const getEstadisticasRapidas = async (req: Request, res: Response) => {
         return res.status(500).json({
             success: false,
             message: 'Error interno del servidor al obtener estadísticas rápidas',
-            error: error?.message || 'Error desconocido'
+            error: (typeof error === 'object' && error !== null && 'message' in error) ? (error as any).message : String(error) || 'Error desconocido'
         });
     }
 };
 
-// Obtener actividad reciente (últimos 7 días)
-export const getActividadReciente = async (req: Request, res: Response) => {
+// Obtener actividad reciente (feed)
+export const getActividadRecienteFeed = async (req: Request, res: Response) => {
     try {
         const usuarioId = (req as any).user?.id;
-        
         if (!usuarioId) {
             return res.status(401).json({
                 success: false,
                 message: 'Usuario no autenticado'
             });
         }
-
-        const filtros: FiltrosEstadisticasDto = {
-            tipo_periodo: 'semana'
-        };
-
-        const resultado = await EstadisticasService.getDashboardEstadisticas(usuarioId, filtros);
-
-        if (!resultado.success) {
-            return res.status(400).json(resultado);
-        }
-
+        const feed = await EstadisticasService.getActividadReciente(usuarioId);
         return res.status(200).json({
             success: true,
-            message: 'Actividad reciente obtenida exitosamente',
-            data: {
-                actividad_diaria: resultado.data?.actividad_reciente || [],
-                grafica: resultado.data?.grafica_actividad || {}
-            }
+            data: feed
         });
-
-    } catch (error: any) {
-        console.error('❌ Error en getActividadReciente:', error);
+    } catch (error) {
+        console.error('❌ Error en getActividadRecienteFeed:', error);
         return res.status(500).json({
             success: false,
             message: 'Error interno del servidor al obtener actividad reciente',
-            error: error?.message || 'Error desconocido'
+            error: (typeof error === 'object' && error !== null && 'message' in error) ? (error as any).message : String(error) || 'Error desconocido'
         });
     }
 }; 

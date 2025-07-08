@@ -5,7 +5,7 @@ import {
     getDashboardEstadisticas,
     exportarEstadisticas,
     getEstadisticasRapidas,
-    getActividadReciente
+    getActividadRecienteFeed
 } from '../../controllers/EstadisticasController/estadisticasController';
 import {
     validarDashboardEstadisticas,
@@ -68,17 +68,15 @@ router.get(
 );
 
 /**
- * @route GET /api/estadisticas/actividad-reciente
- * @desc Actividad reciente del establecimiento
+ * @route GET /api/estadisticas/actividad-feed
+ * @desc Feed de actividad reciente del establecimiento (clics, favoritos, comentarios, puntuaciones)
  * @access Private (Solo PROPIETARIO)
- * @query {number} [dias=7] - Número de días hacia atrás (1-30)
  */
 router.get(
-    '/actividad-reciente',
+    '/actividad-feed',
     verifyToken,
     onlyPropietario,
-    validarActividadReciente,
-    getActividadReciente
+    getActividadRecienteFeed
 );
 
 export default router; 

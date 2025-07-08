@@ -53,8 +53,7 @@ class EstadisticasRepository {
             const actividad = {
                 clics_perfil: 0,
                 comentarios_totales: 0,
-                favoritos_totales: 0,
-                busquedas: 0
+                favoritos_totales: 0
             };
 
             actividadResult.rows.forEach((row: any) => {
@@ -66,14 +65,13 @@ class EstadisticasRepository {
                     case 'comentario':
                         actividad.comentarios_totales = parseInt(row.total);
                         break;
-                    case 'favorito':
-                        actividad.favoritos_totales = parseInt(row.total);
-                        break;
-                    case 'busqueda':
-                        actividad.busquedas = parseInt(row.total);
-                        break;
                 }
             });
+
+            // Obtener favoritos reales de la tabla favorito
+            const favoritosQuery = `SELECT COUNT(*) as total FROM favorito WHERE FK_id_establecimiento = $1`;
+            const favoritosResult = await db.query(favoritosQuery, [establecimientoId]);
+            actividad.favoritos_totales = parseInt(favoritosResult.rows[0].total || 0);
 
             const puntuacionRow = puntuacionesResult.rows[0] || {};
             const comentarioRow = comentariosResult.rows[0] || {};
@@ -279,6 +277,29 @@ class EstadisticasRepository {
         } catch (error) {
             console.error('❌ Error obteniendo establecimiento por usuario:', error);
             return null;
+        }
+    }
+
+    // Obtener actividad reciente (últimos 10 eventos relevantes)
+    static async getActividadReciente(establecimientoId: number): Promise<any[]> {
+        try {
+            const query = `
+                SELECT 
+                    tipo_actividad,
+                    fk_id_usuario,
+                    fecha_actividad,
+                    datos_adicionales
+                FROM actividad_establecimiento
+                WHERE fk_id_establecimiento = $1
+                AND tipo_actividad IN ('click_establecimiento', 'clic_perfil', 'favorito', 'comentario', 'puntuacion')
+                ORDER BY fecha_actividad DESC
+                LIMIT 10
+            `;
+            const result = await db.query(query, [establecimientoId]);
+            return result.rows;
+        } catch (error) {
+            console.error('❌ Error obteniendo actividad reciente:', error);
+            return [];
         }
     }
 }
