@@ -23,7 +23,7 @@ class EstadisticasRepository {
                     tipo_actividad,
                     COUNT(*) as total
                 FROM actividad_establecimiento 
-                WHERE fk_id_establecimiento = $1 ${whereClause}
+                WHERE fk_id_establecimiento = $1
                 GROUP BY tipo_actividad
             `;
             
