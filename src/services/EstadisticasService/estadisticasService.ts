@@ -36,9 +36,7 @@ class EstadisticasService {
                 tendencias
             ] = await Promise.all([
                 EstadisticasRepository.getEstadisticasGenerales(
-                    establecimientoInfo.id, 
-                    fechaInicio, 
-                    fechaFin
+                    establecimientoInfo.id
                 ),
                 EstadisticasRepository.getTotalesPorTipoActividad(
                     establecimientoInfo.id,
