@@ -38,12 +38,14 @@ const upload = multer({
 
 // Rutas públicas
 router.get('/activas', listarPromocionesActivas);
-router.get('/:id', detallePromocionPublica);
+router.get('/mis-promociones', validarListarMisPromocionesCompleto, listarMisPromociones);
 
 // Rutas protegidas para propietarios - ANTES de /:id
 router.post('/crear', upload.single('imagen_promocional'), validarCrearPromocionCompleto, crearPromocion);
-router.get('/mis-promociones', validarListarMisPromocionesCompleto, listarMisPromociones);
 router.put('/editar/:id', upload.single('imagen_promocional'), validarEditarPromocionCompleto, editarPromocion);
 router.delete('/eliminar/:id', validarEliminarPromocionCompleto, eliminarPromocion);
+
+// Ruta dinámica SIEMPRE al final
+router.get('/:id', detallePromocionPublica);
 
 export default router; 
