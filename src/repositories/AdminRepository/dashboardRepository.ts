@@ -204,8 +204,8 @@ class DashboardRepository {
     static async getDashboardStats() {
         try {
             // Ejecutar todas las consultas en paralelo
-            const [usuariosAprobados, usuariosPendientes, totalComentarios, establecimientosPendientes, establecimientosRechazados, establecimientosMembresiaActiva, totalClicks] = await Promise.all([
-                db.query(`SELECT COUNT(*)::int as total FROM usuario_general WHERE estado = 'Aprobado'`),
+            const [usuariosActivos, usuariosPendientes, totalComentarios, establecimientosPendientes, establecimientosRechazados, establecimientosMembresiaActiva, totalClicks] = await Promise.all([
+                db.query(`SELECT COUNT(*)::int as total FROM usuario_general WHERE estado = 'Activo'`),
                 db.query(`SELECT COUNT(*)::int as total FROM usuario_general WHERE estado = 'Pendiente'`),
                 db.query(`SELECT COUNT(*)::int as total FROM comentario`),
                 db.query(`SELECT COUNT(*)::int as total FROM establecimiento WHERE estado = 'Pendiente'`),
@@ -214,7 +214,7 @@ class DashboardRepository {
                 db.query(`SELECT COUNT(*)::int as total FROM actividad_establecimiento WHERE tipo_actividad = 'click_establecimiento'`)
             ]);
             return {
-                usuarios_aprobados: usuariosAprobados.rows[0].total,
+                usuarios_activos: usuariosActivos.rows[0].total,
                 usuarios_pendientes: usuariosPendientes.rows[0].total,
                 total_comentarios: totalComentarios.rows[0].total,
                 establecimientos_pendientes: establecimientosPendientes.rows[0].total,
