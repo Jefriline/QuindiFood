@@ -6,10 +6,7 @@ import { EstadoMembresiaDto } from '../../Dto/EstablecimientoDto/estadoMembresia
 import EstablecimientoService from '../../services/EstablecimientoService/establecimientoService';
 import { BlobServiceClient, BlobSASPermissions } from '@azure/storage-blob';
 import UserService from '../../services/userServices/UserService';
-import { createSubscriptionWithPlan, mercadoPagoConfig } from '../../config/mercadopago-config';
-
-// Plan ID de suscripción premium (obtenido del script crear-plan-suscripcion)
-const PLAN_ID_PREMIUM = '2c93808497e081eb0197e8e83f4d0380';
+import { mercadoPagoConfig } from '../../config/mercadopago-config';
 
 const registerEstablecimiento = async (req: Request, res: Response) => {
     try {
@@ -151,7 +148,7 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
         // Estado de membresía por defecto: Inactivo (gratuito)
         let estadoMembresia = 'Inactivo';
         if (plan === 'premium') {
-            estadoMembresia = 'Activo';
+            estadoMembresia = 'Pendiente de Pago'; // NO activar hasta que pague
         }
         const estadoMembresiaDto = new EstadoMembresiaDto(estadoMembresia);
 
@@ -182,10 +179,10 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
             horariosArray
         );
 
-        // Si es premium, crear la suscripción en Mercado Pago y devolver el init_point
+        // Si es premium, crear una PREFERENCIA SIMPLE en lugar de suscripción
         if (plan === 'premium') {
             try {
-                console.log('🔄 Iniciando proceso de suscripción premium...');
+                console.log('🔄 Iniciando proceso de pago premium con preferencia simple...');
                 
                 const userEmail = await UserService.getEmailById(FK_id_usuario);
                 console.log('📧 Email del usuario obtenido:', userEmail);
@@ -199,53 +196,56 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                     ? 'TESTUSER923920023@testuser.com' // Email de cuenta de prueba
                     : userEmail;
 
-                console.log('🔧 Configuración Mercado Pago:', {
-                    payer_email,
-                    isTest: mercadoPagoConfig.isTest,
-                    hasToken: !!mercadoPagoConfig.accessToken,
-                    planId: PLAN_ID_PREMIUM
-                });
-
-                // Verificar que tenemos un Plan ID
-                if (!PLAN_ID_PREMIUM) {
-                    console.error('❌ MERCADOPAGO_PLAN_ID no está configurado');
-                    throw new Error('Plan de suscripción no configurado');
-                }
-
-                // Datos para la suscripción usando el Plan ID
-                const subscriptionData = {
-                    preapproval_plan_id: PLAN_ID_PREMIUM,
-                    reason: `Membresía Premium QuindiFood - ${nombre_establecimiento}`,
+                console.log('🔧 Creando preferencia simple para premium...');
+                
+                // Crear PREFERENCIA SIMPLE (compatible con Wallet)
+                const fetch = (await import('node-fetch')).default;
+                const preferenceData = {
+                    items: [{
+                        title: 'Membresía Premium QuindiFood - Primer Mes',
+                        description: `Acceso premium para ${nombre_establecimiento}`,
+                        quantity: 1,
+                        unit_price: 35000, // Precio actualizado
+                        currency_id: 'COP'
+                    }],
+                    payer: {
+                        email: payer_email
+                    },
+                    back_urls: {
+                        success: `${mercadoPagoConfig.frontendUrl}/registro-exitoso`,
+                        failure: `${mercadoPagoConfig.frontendUrl}/registro-error`,
+                        pending: `${mercadoPagoConfig.frontendUrl}/registro-pendiente`
+                    },
+                    auto_return: 'approved',
                     external_reference: `est_${resultado.id_establecimiento}_premium_${Date.now()}`,
-                    payer_email,
-                    back_url: `${mercadoPagoConfig.frontendUrl}/registro-exitoso`,
-                    // Para suscripciones con plan, no necesitamos auto_recurring
-                    // La configuración viene del plan
+                    notification_url: `${mercadoPagoConfig.backendUrl}/webhook/mercadopago`
                 };
 
-                console.log('📤 Creando suscripción con Plan ID:', JSON.stringify(subscriptionData, null, 2));
-
-                // Crear suscripción usando fetch directo (más confiable)
-                const result = await createSubscriptionWithPlan(subscriptionData);
-                
-                console.log('🔄 Resultado de suscripción:', {
-                    success: result.success,
-                    hasInitPoint: result.success && !!result.data?.init_point,
-                    status: result.success ? result.data?.status : result.status
+                const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${mercadoPagoConfig.accessToken}`
+                    },
+                    body: JSON.stringify(preferenceData)
                 });
 
-                if (result.success && result.data?.init_point && result.data?.id) {
-                    // Asociar el preapproval_id al establecimiento
-                    console.log('🔗 Asociando preapproval_id:', result.data.id, 'al establecimiento:', resultado.id_establecimiento);
-                    await EstablecimientoService.asociarPreapprovalId(resultado.id_establecimiento, result.data.id);
+                const data = await response.json();
+                console.log('🔄 Respuesta de preferencia:', { success: response.ok, id: data.id, hasInitPoint: !!data.init_point });
+
+                if (response.ok && data.init_point && data.id) {
+                    console.log('✅ Preferencia simple creada exitosamente');
+                    
+                    // Guardar el preference_id
+                    await EstablecimientoService.asociarPreapprovalId(resultado.id_establecimiento, data.id);
                     
                     return res.status(201).json({
                         success: true,
                         message: 'Tu solicitud de establecimiento está en revisión. Completa el pago para activar tu membresía premium.',
-                        init_point: result.data.init_point,
-                        preferenceId: result.data.id, // Para el frontend con Wallet
-                        preapproval_id: result.data.id,
-                        payment_type: 'subscription',
+                        init_point: data.init_point,
+                        preferenceId: data.id, // Para el frontend con Wallet
+                        preference_id: data.id,
+                        payment_type: 'simple',
                         data: {
                             id_establecimiento: resultado.id_establecimiento,
                             nombre_establecimiento,
@@ -253,78 +253,13 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                             estado_membresia: 'Pendiente de Pago',
                             fotos_subidas: fotosUrls.length,
                             documentos_subidos: Object.keys(documentosUrls).length,
-                            precio_mensual: 25000, // Actualizado según el plan
-                            moneda: 'COP',
-                            plan_id: PLAN_ID_PREMIUM
+                            precio_mensual: 35000,
+                            moneda: 'COP'
                         }
                     });
                 } else {
-                    console.error('❌ Error en suscripción:', result);
-                    
-                    // Si la suscripción falla, intentar con preferencia simple como fallback
-                    console.log('🔄 Intentando fallback con preferencia simple...');
-                    
-                    const fetch = (await import('node-fetch')).default;
-                    const preferenceData = {
-                        items: [{
-                            title: 'Membresía Premium QuindiFood - Primer Mes',
-                            description: `Acceso premium para ${nombre_establecimiento}`,
-                            quantity: 1,
-                            unit_price: 25000, // Precio actualizado
-                            currency_id: 'COP'
-                        }],
-                        payer: {
-                            email: payer_email
-                        },
-                        back_urls: {
-                            success: `${mercadoPagoConfig.frontendUrl}/registro-exitoso`,
-                            failure: `${mercadoPagoConfig.frontendUrl}/registro-error`,
-                            pending: `${mercadoPagoConfig.frontendUrl}/registro-pendiente`
-                        },
-                        auto_return: 'approved',
-                        external_reference: `est_${resultado.id_establecimiento}_premium_fallback`,
-                        notification_url: `${mercadoPagoConfig.backendUrl}/webhook/mercadopago`
-                    };
-
-                    const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${mercadoPagoConfig.accessToken}`
-                        },
-                        body: JSON.stringify(preferenceData)
-                    });
-
-                    const fallbackData = await response.json();
-
-                    if (response.ok && fallbackData.init_point && fallbackData.id) {
-                        console.log('✅ Fallback con preferencia exitoso');
-                        
-                        // Guardar el preference_id
-                        await EstablecimientoService.asociarPreapprovalId(resultado.id_establecimiento, fallbackData.id);
-                        
-                        return res.status(201).json({
-                            success: true,
-                            message: 'Tu solicitud de establecimiento está en revisión. Completa el pago para activar tu membresía premium.',
-                            init_point: fallbackData.init_point,
-                            preferenceId: fallbackData.id, // Para el frontend con Wallet
-                            preference_id: fallbackData.id,
-                            payment_type: 'simple',
-                            data: {
-                                id_establecimiento: resultado.id_establecimiento,
-                                nombre_establecimiento,
-                                estado: 'Pendiente',
-                                estado_membresia: 'Pendiente de Pago',
-                                fotos_subidas: fotosUrls.length,
-                                documentos_subidos: Object.keys(documentosUrls).length,
-                                precio_mensual: 25000,
-                                moneda: 'COP'
-                            }
-                        });
-                    } else {
-                        console.error('❌ Fallback también falló:', fallbackData);
-                        throw new Error('No se pudo crear ni suscripción ni preferencia de pago');
-                    }
+                    console.error('❌ Error creando preferencia:', data);
+                    throw new Error('No se pudo crear la preferencia de pago');
                 }
             } catch (error: any) {
                 console.error('❌ Error completo en proceso premium:', error);

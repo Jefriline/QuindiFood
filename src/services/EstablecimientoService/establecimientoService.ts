@@ -210,6 +210,35 @@ export class EstablecimientoService {
             throw error;
         }
     }
+
+    static async cancelarRegistroPendiente(idUsuario: number) {
+        try {
+            console.log(`Cancelando registro premium pendiente para usuario ID: ${idUsuario}`);
+            
+            // Buscar el establecimiento más reciente del usuario con estado "Pendiente de Pago"
+            const resultado = await EstablecimientoRepository.cancelarRegistroPendiente(idUsuario);
+            
+            if (resultado.success) {
+                console.log('Registro premium cancelado y eliminado exitosamente');
+                return {
+                    success: true,
+                    data: {
+                        nombre_establecimiento: resultado.data?.nombre_establecimiento,
+                        archivos_eliminados: resultado.data?.archivos_eliminados || 0
+                    }
+                };
+            } else {
+                console.log('No se encontró registro pendiente para cancelar');
+                return {
+                    success: false,
+                    message: 'No se encontró ningún registro premium pendiente para este usuario'
+                };
+            }
+        } catch (error) {
+            console.error('Error en el servicio al cancelar registro pendiente:', error);
+            throw error;
+        }
+    }
 }
 
 export default EstablecimientoService; 

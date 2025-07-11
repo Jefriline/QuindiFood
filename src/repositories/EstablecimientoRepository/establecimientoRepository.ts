@@ -715,6 +715,42 @@ class EstablecimientoRepository {
             client.release();
         }
     }
+
+    static async cancelarRegistroPendiente(idUsuario: number) {
+        try {
+            // Buscar establecimiento más reciente con estado "Pendiente de Pago"
+            const query = `
+                SELECT e.id_establecimiento, e.nombre_establecimiento 
+                FROM establecimiento e
+                INNER JOIN estado_membresia em ON e.id_establecimiento = em.FK_id_establecimiento
+                WHERE e.FK_id_usuario = $1 AND em.estado = 'Pendiente de Pago'
+                ORDER BY e.id_establecimiento DESC
+                LIMIT 1
+            `;
+            
+            const result = await db.query(query, [idUsuario]);
+            
+            if (result.rows.length === 0) {
+                return { success: false, message: 'No hay registro pendiente' };
+            }
+            
+            const establecimiento = result.rows[0];
+            
+            // Eliminar completamente usando el método existente
+            await this.eliminarEstablecimientoCompleto(establecimiento.id_establecimiento, idUsuario, false);
+            
+            return {
+                success: true,
+                data: {
+                    nombre_establecimiento: establecimiento.nombre_establecimiento,
+                    archivos_eliminados: 1
+                }
+            };
+        } catch (error) {
+            console.error('Error cancelando registro pendiente:', error);
+            throw error;
+        }
+    }
 }
 
 export default EstablecimientoRepository; 

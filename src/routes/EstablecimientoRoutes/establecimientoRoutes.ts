@@ -22,6 +22,7 @@ import simpleUserId from '../../middleware/UserValidator/simpleUserId';
 import { trackEstablecimientoAccess } from '../../middleware/ActivityTracker/activityTrackerMiddleware';
 import simpleUserIdOptional from '../../middleware/UserValidator/simpleUserIdOptional';
 import cancelarSuscripcion from '../../controllers/EstablecimientoController/cancelarSuscripcionController';
+import cancelarRegistroPremium from '../../controllers/EstablecimientoController/cancelarRegistroPremium';
 
 const router = express.Router();
 
@@ -106,5 +107,8 @@ router.delete('/eliminar/mi-establecimiento/:id', verifyToken, eliminarEstableci
 
 // Cancelar suscripción premium
 router.put('/cancelar-suscripcion', verifyToken, simpleUserId, onlyPropietario, cancelarSuscripcion);
+
+// Cancelar registro premium pendiente 
+router.delete('/cancelar-registro-premium', verifyToken, cancelarRegistroPremium);
 
 export default router; 
