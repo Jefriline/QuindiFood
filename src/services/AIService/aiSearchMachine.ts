@@ -350,6 +350,7 @@ export class AISearchMachine {
 
   // Búsqueda ultra-inteligente con múltiples algoritmos
   private async busquedaUltraInteligente(analisis: any): Promise<any> {
+    // 🔧 LIMPIAR RESULTADOS PREVIOS
     const resultados: {
       productos: any[];
       establecimientos: any[];
@@ -359,6 +360,8 @@ export class AISearchMachine {
       establecimientos: [],
       precision: 0
     };
+    
+    console.log(`🔍 Nueva búsqueda iniciada - palabras clave: ${analisis.palabrasClave.join(', ')}`);
     
     // 1. Búsqueda por palabras clave exactas
     const busquedaExacta = this.busquedaExacta(analisis.palabrasClave);
@@ -387,9 +390,14 @@ export class AISearchMachine {
       { resultados: busquedaPatrones.establecimientos, peso: 0.9 }
     ]);
     
+    // 🔧 FILTRAR SOLO PRODUCTOS RELEVANTES PARA ESTA BÚSQUEDA
+    console.log(`📊 Productos antes de filtro: ${productosFinales.length}`);
+    
     // Aplicar filtros inteligentes basados en análisis
     resultados.productos = this.aplicarFiltrosInteligentes(productosFinales, analisis);
     resultados.establecimientos = this.aplicarFiltrosInteligentesEstablecimientos(establecimientosFinales, analisis);
+    
+    console.log(`📊 Productos después de filtro: ${resultados.productos.length}`);
     
     // Calcular precisión
     resultados.precision = this.calcularPrecision(resultados, analisis);
@@ -406,54 +414,95 @@ export class AISearchMachine {
     
     for (const producto of this.productosCache) {
       let score = 0;
+      let palabrasEncontradas = 0;
       const textoCompleto = producto.texto_busqueda_completo;
       
+      // 🔥 NUEVA LÓGICA: BUSCAR CADA PALABRA INDIVIDUAL
       for (const palabra of palabrasClave) {
-        const palabraLower = palabra.toLowerCase();
+        const palabraLower = palabra.toLowerCase().trim();
         
-        // 🔥 BÚSQUEDA MÁS AGRESIVA:
+        // Saltar palabras muy cortas o comunes
+        if (palabraLower.length <= 2 || ['con', 'de', 'la', 'el', 'en', 'un', 'una'].includes(palabraLower)) {
+          continue;
+        }
         
-        // Máximo peso si la palabra está en el nombre del producto
+        let palabraEncontrada = false;
+        
+        // 🎯 BÚSQUEDA EN NOMBRE (máximo peso)
         if (producto.nombre.toLowerCase().includes(palabraLower)) {
-          score += 3.0; // Aumentado de 2.0 a 3.0
+          score += 4.0;
+          palabraEncontrada = true;
+          console.log(`  ✅ "${palabraLower}" encontrada en NOMBRE: ${producto.nombre}`);
         }
         
-        // Alto peso si está en la descripción
+        // 🎯 BÚSQUEDA EN DESCRIPCIÓN (alto peso)
         if (producto.descripcion && producto.descripcion.toLowerCase().includes(palabraLower)) {
-          score += 2.5; // Nuevo: peso alto para descripción
+          score += 3.0;
+          palabraEncontrada = true;
+          console.log(`  ✅ "${palabraLower}" encontrada en DESCRIPCIÓN: ${producto.descripcion.substring(0, 50)}...`);
         }
         
-        // Peso medio para otras partes
-        if (textoCompleto.includes(palabraLower)) {
-          score += 1.5; // Aumentado de 1.0 a 1.5
+        // 🎯 BÚSQUEDA EN CATEGORÍA DE PRODUCTO
+        if (producto.categoria_producto && producto.categoria_producto.toLowerCase().includes(palabraLower)) {
+          score += 2.5;
+          palabraEncontrada = true;
+          console.log(`  ✅ "${palabraLower}" encontrada en CATEGORÍA: ${producto.categoria_producto}`);
         }
         
-        // 🍪 BÚSQUEDA ESPECÍFICA PARA COOKIES & CREAM:
-        if (palabraLower === 'cookies' || palabraLower === 'cream') {
-          if (producto.nombre.toLowerCase().includes('cookies') || 
-              producto.nombre.toLowerCase().includes('cream')) {
-            score += 5.0; // Bonus extra para cookies/cream en nombre
-          }
+        // 🎯 BÚSQUEDA EN NOMBRE DE ESTABLECIMIENTO
+        if (producto.nombre_establecimiento && producto.nombre_establecimiento.toLowerCase().includes(palabraLower)) {
+          score += 2.0;
+          palabraEncontrada = true;
+          console.log(`  ✅ "${palabraLower}" encontrada en ESTABLECIMIENTO: ${producto.nombre_establecimiento}`);
         }
         
-        // 🍫 BÚSQUEDA ESPECÍFICA PARA GALLETA/CHOCOLATE:
-        if (palabraLower === 'galleta' || palabraLower === 'chocolate') {
-          if (producto.descripcion && 
-              (producto.descripcion.toLowerCase().includes('galleta') || 
-               producto.descripcion.toLowerCase().includes('chocolate'))) {
-            score += 4.0; // Bonus extra para galleta/chocolate en descripción
+        // 🎯 BÚSQUEDA EN TEXTO COMPLETO (peso bajo)
+        if (!palabraEncontrada && textoCompleto.includes(palabraLower)) {
+          score += 1.0;
+          palabraEncontrada = true;
+          console.log(`  ✅ "${palabraLower}" encontrada en TEXTO COMPLETO`);
+        }
+        
+        if (palabraEncontrada) {
+          palabrasEncontradas++;
+        }
+      }
+      
+      // 🎯 BONUS POR MÚLTIPLES PALABRAS ENCONTRADAS
+      const porcentajePalabras = palabrasEncontradas / Math.max(palabrasClave.length - 2, 1); // Excluir palabras comunes
+      if (porcentajePalabras >= 0.5) { // Si encuentra al menos 50% de palabras importantes
+        score += (porcentajePalabras * 5.0); // Bonus por coincidencias múltiples
+        console.log(`  🎯 BONUS múltiples palabras: ${porcentajePalabras.toFixed(2)} x 5.0 = +${(porcentajePalabras * 5.0).toFixed(1)}`);
+      }
+      
+      // 🍪 BONUS ESPECÍFICOS PARA CASOS COMUNES
+      const palabrasEspeciales = palabrasClave.filter(p => 
+        ['cookies', 'cream', 'galleta', 'chocolate', 'vainilla', 'trozos'].includes(p.toLowerCase())
+      );
+      
+      if (palabrasEspeciales.length > 0) {
+        for (const palabraEsp of palabrasEspeciales) {
+          if (producto.nombre.toLowerCase().includes(palabraEsp.toLowerCase()) || 
+              (producto.descripcion && producto.descripcion.toLowerCase().includes(palabraEsp.toLowerCase()))) {
+            score += 3.0; // Bonus extra para palabras específicas
+            console.log(`  🍪 BONUS palabra especial "${palabraEsp}": +3.0`);
           }
         }
       }
       
       if (score > 0) {
-        productos.push({ ...producto, search_score: score });
+        productos.push({ 
+          ...producto, 
+          search_score: score,
+          palabras_encontradas: palabrasEncontradas,
+          total_palabras: palabrasClave.length
+        });
         
-        // 🔍 DEBUG para Cookies & Cream
-        if (producto.nombre.toLowerCase().includes('cookies') || 
-            producto.nombre.toLowerCase().includes('cream') ||
-            (producto.descripcion && producto.descripcion.toLowerCase().includes('galleta'))) {
-          console.log(`🍪 DEBUG Cookies & Cream: ID ${producto.id_producto} - ${producto.nombre} - Score: ${score}`);
+        // 🔍 DEBUG detallado para productos con score alto
+        if (score > 5.0) {
+          console.log(`🔥 PRODUCTO CON SCORE ALTO: ID ${producto.id_producto} - ${producto.nombre} - Score: ${score.toFixed(2)}`);
+          console.log(`   📝 Descripción: ${producto.descripcion || 'Sin descripción'}`);
+          console.log(`   📊 Palabras: ${palabrasEncontradas}/${palabrasClave.length}`);
         }
       }
     }
@@ -461,17 +510,17 @@ export class AISearchMachine {
     // Log de productos encontrados
     console.log(`📊 Búsqueda exacta encontró ${productos.length} productos`);
     
+    // Procesar establecimientos (simplificado)
     for (const establecimiento of this.establecimientosCache) {
       let score = 0;
       for (const palabra of palabrasClave) {
         const palabraLower = palabra.toLowerCase();
         
-        // Mayor peso si la palabra está en el nombre del establecimiento
+        if (palabraLower.length <= 2) continue;
+        
         if (establecimiento.nombre_establecimiento.toLowerCase().includes(palabraLower)) {
-          score += 2.0; // Peso doble para nombre
-        }
-        // Peso normal para otras partes
-        else if (establecimiento.texto_busqueda_completo.includes(palabraLower)) {
+          score += 2.0;
+        } else if (establecimiento.texto_busqueda_completo.includes(palabraLower)) {
           score += 1.0;
         }
       }
@@ -596,29 +645,69 @@ export class AISearchMachine {
   private aplicarFiltrosInteligentes(productos: any[], analisis: any): any[] {
     let filtered = productos;
     
-    // 🔧 FILTRO MÁS INCLUSIVO - Reducir umbral para encontrar más productos
-    filtered = filtered.filter((p: any) => p.search_score >= 0.3); // Reducido de 0.8 a 0.3
+    console.log(`🔍 DEBUG - Aplicando filtros inteligentes...`);
+    console.log(`📊 Productos originales: ${productos.length}`);
+    
+    // 🔥 FILTRO MÁS ESTRICTO PARA BÚSQUEDAS ESPECÍFICAS
+    const palabrasImportantes = analisis.palabrasClave.filter((p: string) => p.length > 2);
+    
+    // Si hay palabras específicas, filtrar productos que realmente las contengan
+    if (palabrasImportantes.length > 0) {
+      filtered = filtered.filter((p: any) => {
+        let tieneCoincidencia = false;
+        
+        for (const palabra of palabrasImportantes) {
+          const palabraLower = palabra.toLowerCase();
+          
+          // Verificar si el producto realmente contiene esta palabra
+          if (p.nombre.toLowerCase().includes(palabraLower) ||
+              (p.descripcion && p.descripcion.toLowerCase().includes(palabraLower)) ||
+              p.categoria_producto.toLowerCase().includes(palabraLower) ||
+              p.nombre_establecimiento.toLowerCase().includes(palabraLower)) {
+            tieneCoincidencia = true;
+            break;
+          }
+        }
+        
+        return tieneCoincidencia;
+      });
+      
+      console.log(`📊 Después de filtro por palabras específicas: ${filtered.length}`);
+    }
+    
+    // Filtro de relevancia mínima - más inclusivo para búsquedas específicas
+    filtered = filtered.filter((p: any) => p.search_score >= 0.3);
+    
+    console.log(`📊 Después de filtro por score: ${filtered.length}`);
     
     // 🔍 DEBUG: Log de productos antes del filtro
-    console.log(`🔍 DEBUG - Productos antes del filtro (score >= 0.3): ${filtered.length}`);
     if (filtered.length > 0) {
-      console.log(`📊 Primeros 3 productos encontrados:`);
-      filtered.slice(0, 3).forEach((p: any) => {
+      console.log(`📊 Productos filtrados encontrados:`);
+      filtered.slice(0, 5).forEach((p: any) => {
         console.log(`   ID ${p.id_producto}: ${p.nombre} (score: ${p.search_score.toFixed(2)})`);
       });
     }
     
-    // Buscar específicamente el "Cookies & Cream"
-    const cookiesCream = filtered.find((p: any) => 
-      p.nombre.toLowerCase().includes('cookies') || 
-      p.nombre.toLowerCase().includes('cream') ||
-      (p.descripcion && p.descripcion.toLowerCase().includes('galleta'))
-    );
+    // Buscar específicamente productos problemáticos (como helado en búsqueda de té)
+    const productosNoRelacionados = filtered.filter((p: any) => {
+      // Si buscan "té" pero aparece "helado", es problemático
+      const buscaTe = palabrasImportantes.some(palabra => 
+        palabra.toLowerCase().includes('te') || palabra.toLowerCase().includes('japonés')
+      );
+      const esHelado = p.nombre.toLowerCase().includes('helado') || 
+                      p.categoria_producto.toLowerCase().includes('helado');
+      
+      return buscaTe && esHelado;
+    });
     
-    if (cookiesCream) {
-      console.log(`🍪 ENCONTRADO COOKIES & CREAM: ID ${cookiesCream.id_producto} - Score: ${cookiesCream.search_score}`);
-    } else {
-      console.log(`❌ NO se encontró Cookies & Cream en los resultados filtrados`);
+    if (productosNoRelacionados.length > 0) {
+      console.log(`⚠️ PRODUCTOS NO RELACIONADOS DETECTADOS:`);
+      productosNoRelacionados.forEach((p: any) => {
+        console.log(`   ID ${p.id_producto}: ${p.nombre} - NO debe aparecer en esta búsqueda`);
+      });
+      
+      // Remover productos no relacionados
+      filtered = filtered.filter((p: any) => !productosNoRelacionados.includes(p));
     }
     
     // Filtro por ubicación inteligente
@@ -636,10 +725,14 @@ export class AISearchMachine {
       }
     }
     
-    // Ordenar por relevancia y AUMENTAR límite a 10 resultados
-    return filtered
+    // Ordenar por relevancia y limitar a 10 resultados
+    const resultado = filtered
       .sort((a: any, b: any) => b.search_score - a.search_score)
-      .slice(0, 10); // Aumentado de 5 a 10
+      .slice(0, 10);
+    
+    console.log(`✅ Productos finales: ${resultado.length}`);
+    
+    return resultado;
   }
 
   // Aplicar filtros inteligentes a establecimientos

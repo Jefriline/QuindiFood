@@ -204,7 +204,7 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
         // Si es premium, crear una PREFERENCIA SIMPLE en lugar de suscripción
         if (plan === 'premium') {
             try {
-                const userEmail = await UserService.getEmailById(FK_id_usuario);
+            const userEmail = await UserService.getEmailById(FK_id_usuario);
                 
                 if (!userEmail) {
                     throw new Error('No se pudo obtener el email del usuario');
