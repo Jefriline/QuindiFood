@@ -8,247 +8,220 @@ if (!API_KEY) {
 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// Configuración del modelo con parámetros de seguridad
+// Configuración del modelo optimizada para QuindiFood
 export const geminiModel = genAI.getGenerativeModel({ 
   model: "gemini-2.0-flash",
   generationConfig: {
-    temperature: 0.3, // Respuestas más consistentes y menos creativas
-    topK: 20,
-    topP: 0.8,
-    maxOutputTokens: 1000, // Limitar longitud de respuestas
+    temperature: 0.7, // Más creativo para respuestas naturales
+    topK: 40,
+    topP: 0.9,
+    maxOutputTokens: 2000, // Más espacio para respuestas detalladas
   },
   safetySettings: [
     {
       category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
     },
     {
       category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, 
-      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
     },
     {
       category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
     },
     {
       category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
     },
   ],
 });
 
-// Contexto base del sistema QuindiFood
+// Contexto súper específico de QuindiFood
 export const QUINDIFOOD_CONTEXT = `
-Eres un asistente de IA especializado en QuindiFood, una plataforma gastronómica del Quindío, Colombia.
+Eres QuindiBot 🤖, el asistente gastronómico más inteligente del Quindío. Tu misión es ayudar a encontrar la comida perfecta.
 
-MISIÓN: Brindar visibilidad a establecimientos gastronómicos del Quindío, promoviendo competencia justa entre restaurantes consolidados y emergentes.
+🎯 TU SUPERPODER: Conoces TODOS los productos y establecimientos de QuindiFood en tiempo real.
 
-INFORMACIÓN DEL SISTEMA:
-- Plataforma que centraliza restaurantes, menús, promociones, horarios del Quindío
-- Ayuda a transformación digital del sector gastronómico
-- Impulsa economía local y fortalece tejido empresarial
-- Solo incluye establecimientos que cumplen requisitos legales
+📊 DATOS DISPONIBLES EN TIEMPO REAL:
+- Productos con precios exactos, descripciones, calificaciones
+- Establecimientos con ubicaciones, categorías, calificaciones
+- Historial de búsquedas y preferencias de usuarios
+- Comentarios y reseñas reales de clientes
 
-FUNCIONALIDADES PRINCIPALES:
-1. Búsqueda de establecimientos por categoría, precio, etc  
-2. Visualización de productos con precios e imágenes
-3. Sistema de calificaciones y comentarios
-4. Promociones y eventos gastronómicos
-5. Favoritos 
+🔍 CUANDO EL USUARIO PREGUNTE POR COMIDA:
+1. SIEMPRE busca en los datos reales proporcionados
+2. Si hay productos que coinciden, menciona nombres exactos, precios y establecimientos
+3. Si NO hay productos exactos, recomienda alternativas similares de los datos reales
+4. NUNCA inventes productos, precios o establecimientos
 
-RESTRICCIONES IMPORTANTES:
-- SOLO hablar sobre gastronomía, restaurantes, comida del Quindío
-- NO proporcionar información médica, legal, financiera personal
-- NO responder sobre otros temas fuera de QuindiFood
-- SIEMPRE mantener el contexto gastronómico del Quindío
-- VALIDAR que el usuario esté autenticado antes de procesar
-- Si pregunta algo fuera del contexto, redirigir cortésmente a temas gastronómicos
+✅ EJEMPLOS DE RESPUESTAS INTELIGENTES:
+- Usuario: "Quiero sushi" → Si hay sushi real: "¡Genial! Encontré Sushi Roll de Salmón en Sushi Master por $28.500"
+- Usuario: "Quiero sushi" → Si NO hay sushi: "No tengo sushi específicamente, pero tengo Gohan de Salmón en Sushi Express por $23.000, que es parecido"
+- Usuario: "Algo barato" → Muestra los productos más económicos de los datos reales
+- Usuario: "Postres" → Muestra helados, dulces, etc. de los datos reales
 
-DATOS DISPONIBLES:
-- Establecimientos con categorías (comida rápida, cafeterías, etc.)
-- Productos con nombres, precios, descripciones, imágenes
-- Ubicaciones en el Quindío
-- Horarios de atención
-- Calificaciones y comentarios de usuarios
-- Promociones activas
+🚫 NUNCA HAGAS ESTO:
+- Inventar productos que no están en los datos
+- Dar precios inventados
+- Mencionar establecimientos que no existen en los datos
+- Ser genérico cuando tienes datos específicos
+
+🎨 PERSONALIDAD:
+- Entusiasta y conocedor de la gastronomía quindiamana
+- Específico con nombres, precios y ubicaciones
+- Conversacional pero preciso
+- Menciona calificaciones cuando las tengas
 `;
 
-// Tipos de respuestas permitidas para clientes
-export const CLIENT_ALLOWED_TOPICS = [
-  'busqueda_productos',
-  'recomendaciones_gastronomicas', 
-  'informacion_establecimiento',
-  'ayuda_navegacion',
-  'terminos_condiciones',
-  'como_usar_app',
-  'promociones_eventos'
-];
-
-// Función para validar si el tema está permitido
-export const isTopicAllowed = (userInput: string, userRole: string): boolean => {
-  const lowerInput = userInput.toLowerCase();
-  
-  // Palabras clave no permitidas
-  const forbiddenKeywords = [
-    'medicina', 'salud', 'enfermedad', 'legal', 'abogado', 'dinero', 
-    'banco', 'préstamo', 'política', 'religión', 'sexo', 'drogas',
-    'hacker', 'programación', 'código', 'base de datos'
-  ];
-  
-  // Palabras clave gastronómicas permitidas
-  const allowedKeywords = [
-    'comida', 'restaurante', 'menú', 'precio', 'ubicación', 'quindío',
-    'plato', 'bebida', 'postre', 'almuerzo', 'desayuno', 'cena',
-    'reserva', 'delivery', 'takeaway', 'promoción', 'descuento'
-  ];
-  
-  // Si es cliente, verificar restricciones más estrictas
-  if (userRole === 'cliente') {
-    const hasForbidden = forbiddenKeywords.some(keyword => lowerInput.includes(keyword));
-    const hasAllowed = allowedKeywords.some(keyword => lowerInput.includes(keyword));
-    
-    return !hasForbidden && (hasAllowed || lowerInput.includes('quindifood') || lowerInput.includes('ayuda'));
-  }
-  
-  return true; // Administradores tienen más flexibilidad
-};
-
-// Función principal para generar contenido con validaciones
+// Función principal para generar contenido optimizada
 export const generateAIResponse = async (
   prompt: string, 
   userRole: string, 
   conversationHistory: any[] = []
 ): Promise<string> => {
   try {
-    // Validar que el tema esté permitido
-    if (!isTopicAllowed(prompt, userRole)) {
-      return "Lo siento, solo puedo ayudarte con temas relacionados a gastronomía y restaurantes del Quindío. ¿Te gustaría que te recomiende algún plato o restaurante en particular?";
-    }
-
     // Construir historial de conversación
     let conversationContext = '';
     if (conversationHistory.length > 0) {
-      conversationContext = '\nHISTORIAL DE CONVERSACIÓN:\n' + 
-        conversationHistory.slice(-3).map(msg => 
-          `Usuario: ${msg.user_message}\nAsistente: ${msg.ai_response}`
+      conversationContext = '\nHISTORIAL RECIENTE:\n' + 
+        conversationHistory.slice(-2).map(msg => 
+          `Usuario: ${msg.user_message}\nQuindiBot: ${msg.ai_response}`
         ).join('\n') + '\n';
     }
 
-    // Prompt estructurado con contexto y restricciones
+    // Prompt optimizado para QuindiFood
     const structuredPrompt = `
 ${QUINDIFOOD_CONTEXT}
 
 ${conversationContext}
 
-USUARIO ACTUAL: ${userRole}
-NUEVA CONSULTA: ${prompt}
+INFORMACIÓN DE BÚSQUEDA ACTUAL:
+${prompt}
 
-INSTRUCCIONES DE RESPUESTA:
-- Responde ÚNICAMENTE sobre gastronomía del Quindío
-- Sé útil, conciso y amigable
-- Si no tienes información específica, ofrece ayuda general sobre la plataforma
-- Si el usuario pregunta algo fuera del contexto, redirige cortésmente
-- Máximo 200 palabras
-- Usa lenguaje colombiano natural
+INSTRUCCIONES ESPECÍFICAS:
+- Analiza los datos de productos y establecimientos proporcionados
+- Si encuentras productos que coinciden con la búsqueda, menciónelos específicamente
+- Incluye precios exactos, nombres de establecimientos y calificaciones si están disponibles
+- Si no hay coincidencias exactas, sugiere alternativas similares de los datos reales
+- Sé conversacional pero preciso
+- Máximo 300 palabras
 
-RESPUESTA:`;
+RESPUESTA de QuindiBot:`;
 
     const result = await geminiModel.generateContent(structuredPrompt);
     const response = await result.response;
     let text = response.text();
 
-    // Validar que la respuesta no contenga información no deseada
-    const cleanResponse = sanitizeResponse(text);
+    // Limpiar y mejorar la respuesta
+    const cleanResponse = optimizeResponse(text);
     
     return cleanResponse;
   } catch (error) {
     console.error('Error al generar contenido con Gemini:', error);
-    throw new Error('Error del servicio de IA. Por favor intenta de nuevo.');
+    
+    // Respuesta de fallback más inteligente
+    if (prompt.includes('PRODUCTOS ENCONTRADOS:') || prompt.includes('ESTABLECIMIENTOS ENCONTRADOS:')) {
+      return "¡Perfecto! He encontrado varias opciones que podrían interesarte. Déjame mostrarte los mejores resultados basados en tu búsqueda. ¿Te gustaría que profundice en alguna opción específica?";
+    }
+    
+    return 'Lo siento, estoy teniendo problemas técnicos en este momento. ¿Podrías intentar reformular tu consulta? Estoy aquí para ayudarte a encontrar la mejor comida del Quindío.';
   }
 };
 
-// Función para limpiar y validar respuestas
-const sanitizeResponse = (response: string): string => {
-  // Eliminar información sensible si aparece
+// Función para optimizar respuestas
+const optimizeResponse = (response: string): string => {
+  // Remover texto redundante
+  let cleanResponse = response
+    .replace(/^(QuindiBot:|🤖)/i, '')
+    .replace(/\*\*/g, '')
+    .trim();
+  
+  // Asegurar que empiece naturalmente
+  if (!cleanResponse.match(/^[¡!Hola|Perfecto|Genial|Claro|Por supuesto]/i)) {
+    if (cleanResponse.toLowerCase().includes('encontr')) {
+      cleanResponse = '¡Perfecto! ' + cleanResponse;
+    } else if (cleanResponse.toLowerCase().includes('recomien')) {
+      cleanResponse = '¡Claro! ' + cleanResponse;
+    } else {
+      cleanResponse = '¡Hola! ' + cleanResponse;
+    }
+  }
+  
+  // Limpiar posible información sensible (por seguridad)
   const sensitivePatterns = [
-    /api[_\s]?key/gi,
-    /password/gi,
-    /token/gi,
-    /database/gi,
-    /sql/gi,
-    /admin/gi
+    /database|sql|query|admin|password|token/gi,
   ];
   
-  let cleanResponse = response;
   sensitivePatterns.forEach(pattern => {
-    cleanResponse = cleanResponse.replace(pattern, '[INFORMACIÓN RESTRINGIDA]');
+    cleanResponse = cleanResponse.replace(pattern, '[INFORMACIÓN TÉCNICA]');
   });
-  
-  // Asegurar que la respuesta sea sobre gastronomía
-  if (!cleanResponse.toLowerCase().includes('comida') && 
-      !cleanResponse.toLowerCase().includes('restaurante') && 
-      !cleanResponse.toLowerCase().includes('quindío') &&
-      !cleanResponse.toLowerCase().includes('quindifood') &&
-      !cleanResponse.toLowerCase().includes('gastronomía')) {
-    return "Disculpa, solo puedo ayudarte con información gastronómica del Quindío. ¿Qué tipo de comida te interesa?";
-  }
   
   return cleanResponse.trim();
 };
 
-// Función específica para búsquedas de productos
-export const searchProductsWithAI = async (
-  searchQuery: string,
-  userPreferences: any = {},
-  productos: any[] = []
-): Promise<any> => {
+// Función específica para búsquedas con datos reales
+export const generateResponseWithRealData = async (
+  userQuery: string,
+  productos: any[] = [],
+  establecimientos: any[] = [],
+  analisisSemantico: any = {},
+  conversationHistory: any[] = []
+): Promise<string> => {
   try {
-    const searchPrompt = `
-Analiza esta búsqueda de productos gastronómicos: "${searchQuery}"
+    // Construir contexto con datos reales
+    const contextWithData = `
+CONSULTA DEL USUARIO: "${userQuery}"
 
-PRODUCTOS DISPONIBLES:
-${productos.map(p => `- ${p.nombre}: $${p.precio} (${p.descripcion}) - Establecimiento: ${p.nombre_establecimiento}`).join('\n')}
+ANÁLISIS SEMÁNTICO:
+- Intención detectada: ${analisisSemantico.intencion_detectada || 'búsqueda general'}
+- Palabras clave: ${analisisSemantico.palabras_clave?.join(', ') || 'ninguna'}
+- Nivel de confianza: ${analisisSemantico.nivel_confianza || 0}
 
-PREFERENCIAS DEL USUARIO: ${JSON.stringify(userPreferences)}
+PRODUCTOS ENCONTRADOS EN LA BASE DE DATOS (${productos.length} total):
+${productos.slice(0, 8).map((p: any, i: number) => {
+  const calificacion = p.calificacion_promedio ? `⭐${parseFloat(p.calificacion_promedio).toFixed(1)}` : '';
+  return `${i+1}. 🍽️ "${p.nombre}" - $${p.precio} en ${p.nombre_establecimiento} ${calificacion}${p.descripcion ? ` - ${p.descripcion.substring(0, 80)}` : ''}`;
+}).join('\n')}
 
-Devuelve un JSON con esta estructura EXACTA:
-{
-  "productos_recomendados": [
-    {
-      "id_producto": "número",
-      "nombre": "nombre del producto",
-      "precio": "precio",
-      "razon_recomendacion": "por qué se recomienda este producto",
-      "relevancia": "puntuación del 1-10"
-    }
-  ],
-  "mensaje_personalizado": "mensaje amigable explicando la selección"
-}
+ESTABLECIMIENTOS ENCONTRADOS (${establecimientos.length} total):
+${establecimientos.slice(0, 5).map((e: any, i: number) => {
+  const calificacion = e.calificacion_promedio ? `⭐${parseFloat(e.calificacion_promedio).toFixed(1)}` : '';
+  const productos = e.total_productos ? ` (${e.total_productos} productos)` : '';
+  return `${i+1}. 🏪 "${e.nombre_establecimiento}" - ${e.categoria} ${calificacion}${productos} en ${e.ubicacion}`;
+}).join('\n')}
 
-Ordena por relevancia (mayor a menor) y máximo 5 productos.
-`;
+INSTRUCCIONES PARA RESPONDER:
+1. Si hay productos relevantes, menciona los mejores 2-3 con nombres exactos y precios
+2. Si hay establecimientos relevantes, menciona 1-2 con calificaciones
+3. Sé específico y útil, no genérico
+4. Si no hay resultados exactos, sugiere alternativas de los datos disponibles
+5. Menciona ubicaciones si son relevantes
+6. Sé conversacional y entusiasta
 
-    const result = await geminiModel.generateContent(searchPrompt);
+Responde como QuindiBot, el asistente gastronómico experto:`;
+
+    const result = await geminiModel.generateContent(contextWithData);
     const response = await result.response;
+    let text = response.text();
+
+    return optimizeResponse(text);
     
-    try {
-      return JSON.parse(response.text());
-    } catch {
-      // Si falla el parsing, devolver estructura básica
-      return {
-        productos_recomendados: productos.slice(0, 5).map(p => ({
-          id_producto: p.id_producto,
-          nombre: p.nombre,
-          precio: p.precio,
-          razon_recomendacion: "Producto relacionado con tu búsqueda",
-          relevancia: 7
-        })),
-        mensaje_personalizado: "Aquí tienes algunos productos que podrían interesarte."
-      };
-    }
   } catch (error) {
-    console.error('Error en búsqueda de productos con IA:', error);
-    throw error;
+    console.error('Error generando respuesta con datos reales:', error);
+    
+    // Fallback con datos disponibles
+    if (productos.length > 0) {
+      const mejorProducto = productos[0];
+      return `¡Perfecto! Encontré "${mejorProducto.nombre}" por $${mejorProducto.precio} en ${mejorProducto.nombre_establecimiento}. ${productos.length > 1 ? `También tengo ${productos.length - 1} opciones más.` : ''} ¿Te gustaría más detalles sobre alguna opción?`;
+    }
+    
+    if (establecimientos.length > 0) {
+      const mejorEstablecimiento = establecimientos[0];
+      return `¡Genial! Te recomiendo ${mejorEstablecimiento.nombre_establecimiento}, que es ${mejorEstablecimiento.categoria} y está ubicado en ${mejorEstablecimiento.ubicacion}. ¿Te gustaría ver qué productos tienen disponibles?`;
+    }
+    
+    return 'No encontré resultados exactos para tu búsqueda, pero puedo ayudarte a explorar otras opciones gastronómicas en QuindiFood. ¿Qué tipo de comida prefieres?';
   }
 };
 

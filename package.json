@@ -10,7 +10,9 @@
     "test-mercadopago": "node src/scripts/probarMercadoPago.js",
     "diagnosticar-mercadopago": "node src/scripts/diagnosticarMercadoPago.js",
     "crear-plan-suscripcion": "node src/scripts/crearPlanSuscripcion.js",
-    "probar-flujo-completo": "node src/scripts/probarFlujoCompleto.js"
+    "probar-flujo-completo": "node src/scripts/probarFlujoCompleto.js",
+    "ver-bd": "node src/scripts/consultarBD.js",
+    "ver-tablas": "node src/scripts/verTodasLasTablas.js"
   },
   "dependencies": {
     "@azure/communication-email": "^1.0.0",

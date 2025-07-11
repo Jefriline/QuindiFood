@@ -30,10 +30,10 @@ const mercadoPagoWebhook = async (req: Request, res: Response) => {
         // Consultar el estado del pago en Mercado Pago
         const fetch = (await import('node-fetch')).default;
         const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-          headers: {
-            'Authorization': `Bearer ${process.env.ACCESS_TOKEN_MERCADOPAGO}`
-          }
-        });
+        headers: {
+          'Authorization': `Bearer ${process.env.ACCESS_TOKEN_MERCADOPAGO}`
+        }
+      });
 
         const paymentData = await response.json();
         

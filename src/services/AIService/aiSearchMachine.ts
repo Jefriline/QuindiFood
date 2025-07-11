@@ -614,32 +614,21 @@ export class AISearchMachine {
     resultados: any, 
     analisis: any
   ): Promise<string> {
-    const contextoCompleto = `
-ANÁLISIS SEMÁNTICO DETECTADO:
-- Intención: ${analisis.intencion}
-- Nivel de confianza: ${(analisis.confianza * 100).toFixed(1)}%
-- Palabras clave: ${analisis.palabrasClave.join(', ')}
-
-RESULTADOS DE BÚSQUEDA:
-Productos encontrados: ${resultados.productos.length}
-${resultados.productos.slice(0, 5).map((p: any, i: number) => 
-  `${i+1}. ${p.nombre} - $${p.precio} (${p.nombre_establecimiento}) ${p.calificacion_promedio ? `⭐${parseFloat(p.calificacion_promedio).toFixed(1)}` : ''}`
-).join('\n')}
-
-Establecimientos encontrados: ${resultados.establecimientos.length}
-${resultados.establecimientos.slice(0, 3).map((e: any, i: number) => 
-  `${i+1}. ${e.nombre_establecimiento} - ${e.categoria} ${e.calificacion_promedio ? `⭐${parseFloat(e.calificacion_promedio).toFixed(1)}` : ''}`
-).join('\n')}
-
-HISTORIAL DE CONVERSACIÓN:
-${history.slice(-2).map((h: any) => `Usuario: ${h.user}\nIA: ${h.ia}`).join('\n')}
-
-CONSULTA ACTUAL: "${prompt}"
-
-Responde de manera conversacional, menciona los mejores resultados encontrados con precios y calificaciones. Sé específico y útil.
-`;
-
-    return await generateAIResponse(contextoCompleto, 'cliente', []);
+    // Importar la nueva función optimizada
+    const { generateResponseWithRealData } = await import('../../config/gemini-config');
+    
+    // Usar la nueva función con datos reales
+    return await generateResponseWithRealData(
+      prompt,
+      resultados.productos || [],
+      resultados.establecimientos || [],
+      {
+        intencion_detectada: analisis.intencion,
+        palabras_clave: analisis.palabrasClave,
+        nivel_confianza: analisis.confianza
+      },
+      history
+    );
   }
 
   // Utilidades de análisis

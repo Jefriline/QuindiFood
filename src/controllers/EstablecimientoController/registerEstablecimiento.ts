@@ -310,7 +310,7 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
         // Si es gratis o cualquier otro caso
         return res.status(201).json({
             success: true,
-            message: 'Tu solicitud de establecimiento está en revisión. Pronto recibirás una respuesta del equipo de QuindiFood.',
+            message: 'Tu establecimiento se registró exitosamente. Estado: En revisión por nuestro equipo. Te notificaremos por email el resultado en 24-48 horas.',
             data: {
                 id_establecimiento: resultado.id_establecimiento,
                 nombre_establecimiento,
