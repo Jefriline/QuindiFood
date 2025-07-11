@@ -599,6 +599,66 @@ class EstablecimientoRepository {
         }
     }
 
+    static async activarMembresiaPorPago(idEstablecimiento: number, paymentId: string) {
+        const client = await db.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // Actualizar la membresía a 'Activo'
+            const result = await client.query(
+                `UPDATE estado_membresia SET estado = 'Activo' WHERE FK_id_establecimiento = $1 RETURNING id_estado_membresia`,
+                [idEstablecimiento]
+            );
+            
+            if (result.rowCount === 0) {
+                throw new Error('No se encontró establecimiento para activar membresía');
+            }
+            
+            // Opcional: guardar el payment_id en el establecimiento para referencia
+            await client.query(
+                `UPDATE establecimiento SET payment_id = $1 WHERE id_establecimiento = $2`,
+                [paymentId, idEstablecimiento]
+            );
+            
+            await client.query('COMMIT');
+            
+            console.log(`✅ Membresía activada para establecimiento ${idEstablecimiento} con payment ${paymentId}`);
+            
+            return { 
+                id_establecimiento: idEstablecimiento, 
+                estado_membresia: 'Activo',
+                payment_id: paymentId
+            };
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Error activando membresía por pago:', error);
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
+    static async verificarEstadoMembresia(idEstablecimiento: number): Promise<string> {
+        const client = await db.connect();
+        try {
+            const result = await client.query(
+                `SELECT estado FROM estado_membresia WHERE FK_id_establecimiento = $1`,
+                [idEstablecimiento]
+            );
+            
+            if (result.rowCount === 0) {
+                throw new Error('No se encontró estado de membresía para el establecimiento');
+            }
+            
+            return result.rows[0].estado;
+        } catch (error) {
+            console.error('Error verificando estado de membresía:', error);
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
     static async asociarPreapprovalId(idEstablecimiento: number, preapprovalId: string) {
         await db.query(
             'UPDATE establecimiento SET preapproval_id = $1 WHERE id_establecimiento = $2',

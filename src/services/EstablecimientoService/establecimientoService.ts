@@ -148,6 +148,26 @@ export class EstablecimientoService {
         }
     }
 
+    static async activarMembresiaPorPago(idEstablecimiento: number, paymentId: string) {
+        try {
+            console.log(`Activando membresía por pago para establecimiento ${idEstablecimiento}, payment ID: ${paymentId}`);
+            return await EstablecimientoRepository.activarMembresiaPorPago(idEstablecimiento, paymentId);
+        } catch (error) {
+            console.error('Error en el servicio al activar membresía por pago:', error);
+            throw error;
+        }
+    }
+
+    static async verificarEstadoMembresia(idEstablecimiento: number): Promise<string> {
+        try {
+            console.log(`Verificando estado de membresía para establecimiento ${idEstablecimiento}`);
+            return await EstablecimientoRepository.verificarEstadoMembresia(idEstablecimiento);
+        } catch (error) {
+            console.error('Error en el servicio al verificar estado de membresía:', error);
+            throw error;
+        }
+    }
+
     static async asociarPreapprovalId(idEstablecimiento: number, preapprovalId: string) {
         try {
             return await EstablecimientoRepository.asociarPreapprovalId(idEstablecimiento, preapprovalId);

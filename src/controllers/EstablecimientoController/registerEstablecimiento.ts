@@ -182,10 +182,7 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
         // Si es premium, crear una PREFERENCIA SIMPLE en lugar de suscripción
         if (plan === 'premium') {
             try {
-                console.log('🔄 Iniciando proceso de pago premium con preferencia simple...');
-                
                 const userEmail = await UserService.getEmailById(FK_id_usuario);
-                console.log('📧 Email del usuario obtenido:', userEmail);
                 
                 if (!userEmail) {
                     throw new Error('No se pudo obtener el email del usuario');
@@ -196,8 +193,6 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                     ? 'TESTUSER923920023@testuser.com' // Email de cuenta de prueba
                     : userEmail;
 
-                console.log('🔧 Creando preferencia simple para premium...');
-                
                 // Crear PREFERENCIA SIMPLE (compatible con Wallet)
                 const fetch = (await import('node-fetch')).default;
                 const preferenceData = {
@@ -205,7 +200,7 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                         title: 'Membresía Premium QuindiFood - Primer Mes',
                         description: `Acceso premium para ${nombre_establecimiento}`,
                         quantity: 1,
-                        unit_price: 35000, // Precio actualizado
+                        unit_price: 35000,
                         currency_id: 'COP'
                     }],
                     payer: {
@@ -231,19 +226,30 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                 });
 
                 const data = await response.json();
-                console.log('🔄 Respuesta de preferencia:', { success: response.ok, id: data.id, hasInitPoint: !!data.init_point });
 
                 if (response.ok && data.init_point && data.id) {
-                    console.log('✅ Preferencia simple creada exitosamente');
-                    
                     // Guardar el preference_id
                     await EstablecimientoService.asociarPreapprovalId(resultado.id_establecimiento, data.id);
                     
+                    // PROGRAMAR ELIMINACIÓN AUTOMÁTICA si no se paga en 3 MINUTOS
+                    setTimeout(async () => {
+                        try {
+                            // Verificar si la membresía fue activada
+                            const estadoMembresia = await EstablecimientoService.verificarEstadoMembresia(resultado.id_establecimiento);
+                            
+                            if (estadoMembresia === 'Inactivo') {
+                                await EstablecimientoService.eliminarEstablecimientoCompleto(resultado.id_establecimiento, FK_id_usuario, true);
+                            }
+                        } catch (error) {
+                            console.error('Error en verificación automática:', error);
+                        }
+                    }, 3 * 60 * 1000); // 3 minutos
+                    
                     return res.status(201).json({
                         success: true,
-                        message: 'Tu solicitud de establecimiento está en revisión. Completa el pago para activar tu membresía premium.',
+                        message: 'Tu establecimiento está en proceso. Completa el pago ahora para activar tu membresía premium.',
                         init_point: data.init_point,
-                        preferenceId: data.id, // Para el frontend con Wallet
+                        preferenceId: data.id,
                         preference_id: data.id,
                         payment_type: 'simple',
                         data: {
@@ -255,28 +261,23 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                             documentos_subidos: Object.keys(documentosUrls).length,
                             precio_mensual: 35000,
                             moneda: 'COP',
-                            nota: 'La membresía premium se activará después del pago exitoso'
+                            nota: 'IMPORTANTE: Tienes 3 minutos para completar el pago. Si no pagas, tu registro será eliminado automáticamente.'
                         }
                     });
                 } else {
-                    console.error('❌ Error creando preferencia:', data);
                     throw new Error('No se pudo crear la preferencia de pago');
                 }
             } catch (error: any) {
-                console.error('❌ Error completo en proceso premium:', error);
-                
                 // Si ocurre un error, eliminar el registro creado
                 try {
-                    await EstablecimientoService.eliminarEstablecimientoCompleto(resultado.id_establecimiento, FK_id_usuario, false);
+                await EstablecimientoService.eliminarEstablecimientoCompleto(resultado.id_establecimiento, FK_id_usuario, false);
                 } catch (cleanupError) {
-                    console.error('❌ Error adicional al limpiar registro:', cleanupError);
+                    console.error('Error al limpiar registro:', cleanupError);
                 }
-                
-                const errorMessage = error.message || 'Error desconocido al procesar el pago';
                 
                 return res.status(500).json({
                     success: false,
-                    message: `No se pudo iniciar el proceso de pago premium: ${errorMessage}. Verifica tus datos e intenta de nuevo.`
+                    message: 'No se pudo procesar el pago premium. Intenta nuevamente.'
                 });
             }
         }
