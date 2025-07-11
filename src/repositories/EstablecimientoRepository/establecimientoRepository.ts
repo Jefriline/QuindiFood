@@ -659,6 +659,32 @@ class EstablecimientoRepository {
         }
     }
 
+    static async verificarEstablecimientoPorUsuario(idUsuario: number): Promise<any> {
+        const client = await db.connect();
+        try {
+            const result = await client.query(
+                `SELECT e.id_establecimiento, e.nombre_establecimiento, e.estado, em.estado as estado_membresia 
+                 FROM establecimiento e 
+                 LEFT JOIN estado_membresia em ON e.id_establecimiento = em.FK_id_establecimiento 
+                 WHERE e.FK_id_usuario = $1 
+                 ORDER BY e.created_at DESC 
+                 LIMIT 1`,
+                [idUsuario]
+            );
+            
+            if (result.rowCount === 0) {
+                return null; // No tiene establecimientos
+            }
+            
+            return result.rows[0];
+        } catch (error) {
+            console.error('Error verificando establecimiento por usuario:', error);
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
     static async asociarPreapprovalId(idEstablecimiento: number, preapprovalId: string) {
         await db.query(
             'UPDATE establecimiento SET preapproval_id = $1 WHERE id_establecimiento = $2',

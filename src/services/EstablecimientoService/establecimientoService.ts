@@ -168,6 +168,16 @@ export class EstablecimientoService {
         }
     }
 
+    static async verificarEstablecimientoPorUsuario(idUsuario: number): Promise<any> {
+        try {
+            console.log(`Verificando establecimiento existente para usuario ${idUsuario}`);
+            return await EstablecimientoRepository.verificarEstablecimientoPorUsuario(idUsuario);
+        } catch (error) {
+            console.error('Error en el servicio al verificar establecimiento por usuario:', error);
+            throw error;
+        }
+    }
+
     static async asociarPreapprovalId(idEstablecimiento: number, preapprovalId: string) {
         try {
             return await EstablecimientoRepository.asociarPreapprovalId(idEstablecimiento, preapprovalId);

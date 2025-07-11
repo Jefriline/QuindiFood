@@ -30,6 +30,28 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
             });
         }
 
+        // VALIDAR: No permitir múltiples registros del mismo usuario
+        const establecimientoExistente = await EstablecimientoService.verificarEstablecimientoPorUsuario(FK_id_usuario);
+        if (establecimientoExistente) {
+            if (establecimientoExistente.estado === 'Pendiente') {
+                if (plan === 'premium') {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Ya tienes un establecimiento premium pendiente de pago. Espera a que se complete o se elimine automáticamente en 3 minutos, o completa el pago actual.'
+                    });
+                } else {
+                    // Si tiene uno pendiente (puede ser gratuito o premium expirado) y quiere registrar gratis
+                    await EstablecimientoService.eliminarEstablecimientoCompleto(establecimientoExistente.id_establecimiento, FK_id_usuario, true);
+                    console.log(`🗑️ Establecimiento pendiente ${establecimientoExistente.id_establecimiento} reemplazado por nuevo registro`);
+                }
+            } else if (establecimientoExistente.estado === 'Aprobado') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Ya tienes un establecimiento registrado y aprobado. Un usuario solo puede tener un establecimiento.'
+                });
+            }
+        }
+
         // Validar que se hayan subido los documentos requeridos
         if (!req.files) {
             return res.status(400).json({
@@ -232,6 +254,8 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                     await EstablecimientoService.asociarPreapprovalId(resultado.id_establecimiento, data.id);
                     
                     // PROGRAMAR ELIMINACIÓN AUTOMÁTICA si no se paga en 3 MINUTOS
+                    // SOLO para establecimientos PREMIUM porque requieren pago inmediato
+                    // Los establecimientos gratuitos no tienen límite de tiempo
                     setTimeout(async () => {
                         try {
                             // Verificar si la membresía fue activada
@@ -239,11 +263,12 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                             
                             if (estadoMembresia === 'Inactivo') {
                                 await EstablecimientoService.eliminarEstablecimientoCompleto(resultado.id_establecimiento, FK_id_usuario, true);
+                                console.log(`⏰ Establecimiento premium ${resultado.id_establecimiento} eliminado por no completar pago en 3 minutos`);
                             }
                         } catch (error) {
                             console.error('Error en verificación automática:', error);
                         }
-                    }, 3 * 60 * 1000); // 3 minutos
+                    }, 3 * 60 * 1000); // 3 minutos SOLO para premium
                     
                     return res.status(201).json({
                         success: true,
@@ -292,7 +317,8 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                 estado: 'Pendiente',
                 estado_membresia: 'Inactivo',
                 fotos_subidas: fotosUrls.length,
-                documentos_subidos: Object.keys(documentosUrls).length
+                documentos_subidos: Object.keys(documentosUrls).length,
+                nota: 'Tu establecimiento gratuito será revisado por nuestro equipo. No hay límite de tiempo para la revisión.'
             }
         });
     } catch (error) {
