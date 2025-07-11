@@ -402,24 +402,64 @@ export class AISearchMachine {
     const productos: any[] = [];
     const establecimientos: any[] = [];
     
+    console.log(`🔍 Búsqueda exacta para palabras: ${palabrasClave.join(', ')}`);
+    
     for (const producto of this.productosCache) {
       let score = 0;
+      const textoCompleto = producto.texto_busqueda_completo;
+      
       for (const palabra of palabrasClave) {
         const palabraLower = palabra.toLowerCase();
         
-        // Mayor peso si la palabra está en el nombre del producto
+        // 🔥 BÚSQUEDA MÁS AGRESIVA:
+        
+        // Máximo peso si la palabra está en el nombre del producto
         if (producto.nombre.toLowerCase().includes(palabraLower)) {
-          score += 2.0; // Peso doble para nombre
+          score += 3.0; // Aumentado de 2.0 a 3.0
         }
-        // Peso normal para otras partes
-        else if (producto.texto_busqueda_completo.includes(palabraLower)) {
-          score += 1.0;
+        
+        // Alto peso si está en la descripción
+        if (producto.descripcion && producto.descripcion.toLowerCase().includes(palabraLower)) {
+          score += 2.5; // Nuevo: peso alto para descripción
+        }
+        
+        // Peso medio para otras partes
+        if (textoCompleto.includes(palabraLower)) {
+          score += 1.5; // Aumentado de 1.0 a 1.5
+        }
+        
+        // 🍪 BÚSQUEDA ESPECÍFICA PARA COOKIES & CREAM:
+        if (palabraLower === 'cookies' || palabraLower === 'cream') {
+          if (producto.nombre.toLowerCase().includes('cookies') || 
+              producto.nombre.toLowerCase().includes('cream')) {
+            score += 5.0; // Bonus extra para cookies/cream en nombre
+          }
+        }
+        
+        // 🍫 BÚSQUEDA ESPECÍFICA PARA GALLETA/CHOCOLATE:
+        if (palabraLower === 'galleta' || palabraLower === 'chocolate') {
+          if (producto.descripcion && 
+              (producto.descripcion.toLowerCase().includes('galleta') || 
+               producto.descripcion.toLowerCase().includes('chocolate'))) {
+            score += 4.0; // Bonus extra para galleta/chocolate en descripción
+          }
         }
       }
+      
       if (score > 0) {
         productos.push({ ...producto, search_score: score });
+        
+        // 🔍 DEBUG para Cookies & Cream
+        if (producto.nombre.toLowerCase().includes('cookies') || 
+            producto.nombre.toLowerCase().includes('cream') ||
+            (producto.descripcion && producto.descripcion.toLowerCase().includes('galleta'))) {
+          console.log(`🍪 DEBUG Cookies & Cream: ID ${producto.id_producto} - ${producto.nombre} - Score: ${score}`);
+        }
       }
     }
+    
+    // Log de productos encontrados
+    console.log(`📊 Búsqueda exacta encontró ${productos.length} productos`);
     
     for (const establecimiento of this.establecimientosCache) {
       let score = 0;
@@ -556,8 +596,30 @@ export class AISearchMachine {
   private aplicarFiltrosInteligentes(productos: any[], analisis: any): any[] {
     let filtered = productos;
     
-    // Filtro de relevancia mínima - más estricto
-    filtered = filtered.filter((p: any) => p.search_score >= 0.8);
+    // 🔧 FILTRO MÁS INCLUSIVO - Reducir umbral para encontrar más productos
+    filtered = filtered.filter((p: any) => p.search_score >= 0.3); // Reducido de 0.8 a 0.3
+    
+    // 🔍 DEBUG: Log de productos antes del filtro
+    console.log(`🔍 DEBUG - Productos antes del filtro (score >= 0.3): ${filtered.length}`);
+    if (filtered.length > 0) {
+      console.log(`📊 Primeros 3 productos encontrados:`);
+      filtered.slice(0, 3).forEach((p: any) => {
+        console.log(`   ID ${p.id_producto}: ${p.nombre} (score: ${p.search_score.toFixed(2)})`);
+      });
+    }
+    
+    // Buscar específicamente el "Cookies & Cream"
+    const cookiesCream = filtered.find((p: any) => 
+      p.nombre.toLowerCase().includes('cookies') || 
+      p.nombre.toLowerCase().includes('cream') ||
+      (p.descripcion && p.descripcion.toLowerCase().includes('galleta'))
+    );
+    
+    if (cookiesCream) {
+      console.log(`🍪 ENCONTRADO COOKIES & CREAM: ID ${cookiesCream.id_producto} - Score: ${cookiesCream.search_score}`);
+    } else {
+      console.log(`❌ NO se encontró Cookies & Cream en los resultados filtrados`);
+    }
     
     // Filtro por ubicación inteligente
     if (analisis.scores.filtro_ubicacion > 0) {
@@ -574,10 +636,10 @@ export class AISearchMachine {
       }
     }
     
-    // Ordenar por relevancia y limitar a 5 resultados más relevantes
+    // Ordenar por relevancia y AUMENTAR límite a 10 resultados
     return filtered
       .sort((a: any, b: any) => b.search_score - a.search_score)
-      .slice(0, 5);
+      .slice(0, 10); // Aumentado de 5 a 10
   }
 
   // Aplicar filtros inteligentes a establecimientos
