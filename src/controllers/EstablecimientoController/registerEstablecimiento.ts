@@ -243,6 +243,7 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                         success: true,
                         message: 'Tu solicitud de establecimiento está en revisión. Completa el pago para activar tu membresía premium.',
                         init_point: result.data.init_point,
+                        preferenceId: result.data.id, // Para el frontend con Wallet
                         preapproval_id: result.data.id,
                         payment_type: 'subscription',
                         data: {
@@ -306,6 +307,7 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                             success: true,
                             message: 'Tu solicitud de establecimiento está en revisión. Completa el pago para activar tu membresía premium.',
                             init_point: fallbackData.init_point,
+                            preferenceId: fallbackData.id, // Para el frontend con Wallet
                             preference_id: fallbackData.id,
                             payment_type: 'simple',
                             data: {
