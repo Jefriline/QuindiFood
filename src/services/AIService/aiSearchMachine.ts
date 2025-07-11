@@ -2,6 +2,7 @@ import { generateAIResponse } from '../../config/gemini-config';
 import pool from '../../config/config-db';
 import * as natural from 'natural';
 import FuzzySearch from 'fuzzy-search';
+import { quitarTildes } from '../../Helpers/Normalize/quitarTildes';
 
 export interface SearchMachineResponse {
   respuesta: string;
@@ -426,41 +427,61 @@ export class AISearchMachine {
           continue;
         }
         
+        // 🔧 NORMALIZAR TILDES para mejor búsqueda
+        const palabraNormalizada = quitarTildes(palabraLower);
+        
         let palabraEncontrada = false;
         
-        // 🎯 BÚSQUEDA EN NOMBRE (máximo peso)
-        if (producto.nombre.toLowerCase().includes(palabraLower)) {
+        // 🎯 BÚSQUEDA EN NOMBRE (máximo peso) - CON Y SIN TILDES
+        const nombreNormalizado = quitarTildes(producto.nombre.toLowerCase());
+        if (producto.nombre.toLowerCase().includes(palabraLower) || 
+            nombreNormalizado.includes(palabraNormalizada)) {
           score += 4.0;
           palabraEncontrada = true;
           console.log(`  ✅ "${palabraLower}" encontrada en NOMBRE: ${producto.nombre}`);
         }
         
-        // 🎯 BÚSQUEDA EN DESCRIPCIÓN (alto peso)
-        if (producto.descripcion && producto.descripcion.toLowerCase().includes(palabraLower)) {
-          score += 3.0;
-          palabraEncontrada = true;
-          console.log(`  ✅ "${palabraLower}" encontrada en DESCRIPCIÓN: ${producto.descripcion.substring(0, 50)}...`);
+        // 🎯 BÚSQUEDA EN DESCRIPCIÓN (alto peso) - CON Y SIN TILDES
+        if (producto.descripcion) {
+          const descripcionNormalizada = quitarTildes(producto.descripcion.toLowerCase());
+          if (producto.descripcion.toLowerCase().includes(palabraLower) ||
+              descripcionNormalizada.includes(palabraNormalizada)) {
+            score += 3.0;
+            palabraEncontrada = true;
+            console.log(`  ✅ "${palabraLower}" encontrada en DESCRIPCIÓN: ${producto.descripcion.substring(0, 50)}...`);
+          }
         }
         
-        // 🎯 BÚSQUEDA EN CATEGORÍA DE PRODUCTO
-        if (producto.categoria_producto && producto.categoria_producto.toLowerCase().includes(palabraLower)) {
-          score += 2.5;
-          palabraEncontrada = true;
-          console.log(`  ✅ "${palabraLower}" encontrada en CATEGORÍA: ${producto.categoria_producto}`);
+        // 🎯 BÚSQUEDA EN CATEGORÍA DE PRODUCTO - CON Y SIN TILDES
+        if (producto.categoria_producto) {
+          const categoriaNormalizada = quitarTildes(producto.categoria_producto.toLowerCase());
+          if (producto.categoria_producto.toLowerCase().includes(palabraLower) ||
+              categoriaNormalizada.includes(palabraNormalizada)) {
+            score += 2.5;
+            palabraEncontrada = true;
+            console.log(`  ✅ "${palabraLower}" encontrada en CATEGORÍA: ${producto.categoria_producto}`);
+          }
         }
         
-        // 🎯 BÚSQUEDA EN NOMBRE DE ESTABLECIMIENTO
-        if (producto.nombre_establecimiento && producto.nombre_establecimiento.toLowerCase().includes(palabraLower)) {
-          score += 2.0;
-          palabraEncontrada = true;
-          console.log(`  ✅ "${palabraLower}" encontrada en ESTABLECIMIENTO: ${producto.nombre_establecimiento}`);
+        // 🎯 BÚSQUEDA EN NOMBRE DE ESTABLECIMIENTO - CON Y SIN TILDES
+        if (producto.nombre_establecimiento) {
+          const establecimientoNormalizado = quitarTildes(producto.nombre_establecimiento.toLowerCase());
+          if (producto.nombre_establecimiento.toLowerCase().includes(palabraLower) ||
+              establecimientoNormalizado.includes(palabraNormalizada)) {
+            score += 2.0;
+            palabraEncontrada = true;
+            console.log(`  ✅ "${palabraLower}" encontrada en ESTABLECIMIENTO: ${producto.nombre_establecimiento}`);
+          }
         }
         
-        // 🎯 BÚSQUEDA EN TEXTO COMPLETO (peso bajo)
-        if (!palabraEncontrada && textoCompleto.includes(palabraLower)) {
-          score += 1.0;
-          palabraEncontrada = true;
-          console.log(`  ✅ "${palabraLower}" encontrada en TEXTO COMPLETO`);
+        // 🎯 BÚSQUEDA EN TEXTO COMPLETO (peso bajo) - CON Y SIN TILDES
+        if (!palabraEncontrada) {
+          const textoNormalizado = quitarTildes(textoCompleto);
+          if (textoCompleto.includes(palabraLower) || textoNormalizado.includes(palabraNormalizada)) {
+            score += 1.0;
+            palabraEncontrada = true;
+            console.log(`  ✅ "${palabraLower}" encontrada en TEXTO COMPLETO`);
+          }
         }
         
         if (palabraEncontrada) {
@@ -477,17 +498,36 @@ export class AISearchMachine {
       
       // 🍪 BONUS ESPECÍFICOS PARA CASOS COMUNES
       const palabrasEspeciales = palabrasClave.filter((p: string) => 
-        ['cookies', 'cream', 'galleta', 'chocolate', 'vainilla', 'trozos'].includes(p.toLowerCase())
+        ['cookies', 'cream', 'galleta', 'chocolate', 'vainilla', 'trozos', 'té', 'te', 'japones', 'japonés'].includes(p.toLowerCase())
       );
       
       if (palabrasEspeciales.length > 0) {
         for (const palabraEsp of palabrasEspeciales) {
+          const palabraEspNormalizada = quitarTildes(palabraEsp.toLowerCase());
+          const nombreNormalizado = quitarTildes(producto.nombre.toLowerCase());
+          const descripcionNormalizada = producto.descripcion ? quitarTildes(producto.descripcion.toLowerCase()) : '';
+          
           if (producto.nombre.toLowerCase().includes(palabraEsp.toLowerCase()) || 
-              (producto.descripcion && producto.descripcion.toLowerCase().includes(palabraEsp.toLowerCase()))) {
+              nombreNormalizado.includes(palabraEspNormalizada) ||
+              (producto.descripcion && producto.descripcion.toLowerCase().includes(palabraEsp.toLowerCase())) ||
+              descripcionNormalizada.includes(palabraEspNormalizada)) {
             score += 3.0; // Bonus extra para palabras específicas
             console.log(`  🍪 BONUS palabra especial "${palabraEsp}": +3.0`);
           }
         }
+      }
+      
+      // 🎯 BONUS EXTRA PARA COINCIDENCIAS PERFECTAS
+      const busquedaCompleta = palabrasClave.join(' ').toLowerCase();
+      const busquedaNormalizada = quitarTildes(busquedaCompleta);
+      const nombreProductoNormalizado = quitarTildes(producto.nombre.toLowerCase());
+      const descripcionProductoNormalizada = producto.descripcion ? quitarTildes(producto.descripcion.toLowerCase()) : '';
+      
+      // Si el nombre o descripción contiene múltiples palabras de la búsqueda
+      if (nombreProductoNormalizado.includes(busquedaNormalizada) || 
+          descripcionProductoNormalizada.includes(busquedaNormalizada)) {
+        score += 10.0; // BONUS ENORME para coincidencias perfectas
+        console.log(`  🎯 BONUS COINCIDENCIA PERFECTA: +10.0`);
       }
       
       if (score > 0) {
