@@ -69,8 +69,8 @@ export class AISearchMachine {
       
       return {
         respuesta: respuestaIA,
-        productos: resultadosBusqueda.productos.slice(0, 10),
-        establecimientos: resultadosBusqueda.establecimientos.slice(0, 8),
+        productos: resultadosBusqueda.productos.slice(0, 10), // 🔧 SLICE LIMPIO
+        establecimientos: resultadosBusqueda.establecimientos.slice(0, 8), // 🔧 SLICE LIMPIO
         analisis_semantico: {
           intencion_detectada: analisisSemantico.intencion,
           patron_busqueda: analisisSemantico.patron,
@@ -400,6 +400,12 @@ export class AISearchMachine {
     
     console.log(`📊 Productos después de filtro: ${resultados.productos.length}`);
     
+    // 🔍 DEBUG: Mostrar productos que se van a devolver
+    console.log(`🎯 PRODUCTOS FINALES A DEVOLVER:`);
+    resultados.productos.slice(0, 5).forEach((p: any, index: number) => {
+      console.log(`   ${index + 1}. ID ${p.id_producto}: ${p.nombre} (score: ${p.search_score?.toFixed(2) || 'N/A'})`);
+    });
+    
     // Calcular precisión
     resultados.precision = this.calcularPrecision(resultados, analisis);
     
@@ -408,10 +414,12 @@ export class AISearchMachine {
 
   // Búsqueda exacta optimizada
   private busquedaExacta(palabrasClave: string[]): any {
+    // 🔧 LIMPIAR ARRAYS COMPLETAMENTE
     const productos: any[] = [];
     const establecimientos: any[] = [];
     
     console.log(`🔍 Búsqueda exacta para palabras: ${palabrasClave.join(', ')}`);
+    console.log(`🧹 Arrays limpiados - iniciando búsqueda fresca`);
     
     for (const producto of this.productosCache) {
       let score = 0;
@@ -662,23 +670,42 @@ export class AISearchMachine {
 
   // Combinar resultados con pesos
   private combinarResultados(resultadosArray: any[]): any[] {
+    // 🔧 CREAR NUEVO MAP LIMPIO PARA CADA BÚSQUEDA
     const map = new Map();
     
+    console.log(`🔄 Combinando resultados de ${resultadosArray.length} algoritmos de búsqueda`);
+    
     for (const { resultados, peso } of resultadosArray) {
+      console.log(`📊 Procesando ${resultados.length} resultados con peso ${peso}`);
+      
       for (const item of resultados) {
         const key = item.id_producto || item.id_establecimiento;
         if (map.has(key)) {
-          map.get(key).search_score += (item.search_score * peso);
-          map.get(key).count += 1;
+          // Actualizar score existente
+          const existing = map.get(key);
+          existing.search_score += (item.search_score * peso);
+          existing.count += 1;
         } else {
-          map.set(key, { ...item, search_score: item.search_score * peso, count: 1 });
+          // Crear nueva entrada LIMPIA
+          map.set(key, { 
+            ...item, 
+            search_score: item.search_score * peso, 
+            count: 1 
+          });
         }
       }
     }
     
-    return Array.from(map.values())
-      .map((item: any) => ({ ...item, search_score: item.search_score / item.count }))
+    const resultado = Array.from(map.values())
+      .map((item: any) => ({ 
+        ...item, 
+        search_score: item.search_score / item.count 
+      }))
       .sort((a: any, b: any) => b.search_score - a.search_score);
+    
+    console.log(`✅ Resultados combinados: ${resultado.length} productos únicos`);
+    
+    return resultado;
   }
 
   // Aplicar filtros inteligentes a productos
