@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import EstablecimientoService from '../../services/EstablecimientoService/establecimientoService';
-import { getSubscriptionStatus, mercadoPagoConfig } from '../../config/mercadopago-config';
+import { getSubscriptionStatus } from '../../config/mercadopago-config';
 
 const mercadoPagoWebhook = async (req: Request, res: Response) => {
   try {
@@ -27,18 +27,18 @@ const mercadoPagoWebhook = async (req: Request, res: Response) => {
       });
 
       try {
-        // Consultar el estado de la suscripción en Mercado Pago usando el SDK
-        const preapproval = await getSubscriptionStatus(preapprovalId);
+        // Consultar el estado de la suscripción en Mercado Pago usando fetch directo
+        const preapprovalResult = await getSubscriptionStatus(preapprovalId);
         
-        console.log('📊 Estado de suscripción obtenido:', {
-          id: preapproval.body?.id,
-          status: preapproval.body?.status,
-          payer_email: preapproval.body?.payer_email
-        });
+        if (preapprovalResult.success && preapprovalResult.data) {
+          console.log('📊 Estado de suscripción obtenido:', {
+            id: preapprovalResult.data.id,
+            status: preapprovalResult.data.status,
+            payer_email: preapprovalResult.data.payer_email
+          });
 
-        // Procesar según el estado
-        if (preapproval.body) {
-          const status = preapproval.body.status;
+          // Procesar según el estado
+          const status = preapprovalResult.data.status;
           
           switch (status) {
             case 'authorized':
@@ -53,8 +53,7 @@ const mercadoPagoWebhook = async (req: Request, res: Response) => {
               
             case 'cancelled':
               console.log('❌ Suscripción cancelada, desactivando membresía...');
-              // Necesitamos obtener el ID del establecimiento por preapproval_id
-              // Por ahora, solo log el evento. Se puede mejorar más adelante
+              // Nota: Implementar desactivación de membresía por preapproval_id si es necesario
               console.log('Nota: Implementar desactivación de membresía por preapproval_id');
               break;
               
@@ -65,6 +64,8 @@ const mercadoPagoWebhook = async (req: Request, res: Response) => {
             default:
               console.log('❓ Estado de suscripción desconocido:', status);
           }
+        } else {
+          console.error('❌ Error obteniendo estado de suscripción:', preapprovalResult.error);
         }
 
       } catch (mpError) {
