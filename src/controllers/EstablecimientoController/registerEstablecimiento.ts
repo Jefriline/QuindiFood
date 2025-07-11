@@ -37,7 +37,7 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                 if (plan === 'premium') {
                     return res.status(400).json({
                         success: false,
-                        message: 'Ya tienes un establecimiento premium pendiente de pago. Espera a que se complete o se elimine automáticamente en 3 minutos, o completa el pago actual.'
+                        message: 'Ya tienes un establecimiento premium pendiente de pago. Espera a que se complete o se elimine automáticamente en 10 minutos, o completa el pago actual.'
                     });
                 } else {
                     // Si tiene uno pendiente (puede ser gratuito o premium expirado) y quiere registrar gratis
@@ -253,7 +253,7 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                     // Guardar el preference_id
                     await EstablecimientoService.asociarPreapprovalId(resultado.id_establecimiento, data.id);
                     
-                    // PROGRAMAR ELIMINACIÓN AUTOMÁTICA si no se paga en 3 MINUTOS
+                    // PROGRAMAR ELIMINACIÓN AUTOMÁTICA si no se paga en 10 MINUTOS
                     // SOLO para establecimientos PREMIUM porque requieren pago inmediato
                     // Los establecimientos gratuitos no tienen límite de tiempo
                     setTimeout(async () => {
@@ -263,12 +263,12 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                             
                             if (estadoMembresia === 'Inactivo') {
                                 await EstablecimientoService.eliminarEstablecimientoCompleto(resultado.id_establecimiento, FK_id_usuario, true);
-                                console.log(`⏰ Establecimiento premium ${resultado.id_establecimiento} eliminado por no completar pago en 3 minutos`);
+                                console.log(`⏰ Establecimiento premium ${resultado.id_establecimiento} eliminado por no completar pago en 10 minutos`);
                             }
                         } catch (error) {
                             console.error('Error en verificación automática:', error);
                         }
-                    }, 3 * 60 * 1000); // 3 minutos SOLO para premium
+                    }, 10 * 60 * 1000); // 10 minutos SOLO para premium
                     
                     return res.status(201).json({
                         success: true,
@@ -286,7 +286,7 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                             documentos_subidos: Object.keys(documentosUrls).length,
                             precio_mensual: 35000,
                             moneda: 'COP',
-                            nota: 'IMPORTANTE: Tienes 3 minutos para completar el pago. Si no pagas, tu registro será eliminado automáticamente.'
+                            nota: 'IMPORTANTE: Tienes 10 minutos para completar el pago. Si no pagas, tu registro será eliminado automáticamente.'
                         }
                     });
                 } else {

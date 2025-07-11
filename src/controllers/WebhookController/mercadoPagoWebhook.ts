@@ -52,20 +52,26 @@ const mercadoPagoWebhook = async (req: Request, res: Response) => {
               
               // Extraer ID del establecimiento del external_reference
               if (paymentData.external_reference) {
+                console.log('🔍 External reference encontrado:', paymentData.external_reference);
                 const match = paymentData.external_reference.match(/est_(\d+)_premium/);
                 if (match) {
                   const establecimientoId = parseInt(match[1]);
-                  console.log('🏪 Activando membresía para establecimiento:', establecimientoId);
+                  console.log('🏪 ID del establecimiento extraído:', establecimientoId);
+                  console.log('💳 Payment ID:', paymentId);
                   
                   try {
-                    await EstablecimientoService.activarMembresiaPorPago(establecimientoId, paymentId);
-                    console.log('✅ Membresía activada exitosamente');
+                    const resultado = await EstablecimientoService.activarMembresiaPorPago(establecimientoId, paymentId);
+                    console.log('✅ Membresía activada exitosamente:', resultado);
                   } catch (activationError) {
                     console.error('❌ Error activando membresía:', activationError);
                   }
                 } else {
                   console.error('❌ No se pudo extraer ID del establecimiento del external_reference:', paymentData.external_reference);
+                  console.error('❌ Patrón esperado: est_{número}_premium, recibido:', paymentData.external_reference);
                 }
+              } else {
+                console.error('❌ No se encontró external_reference en los datos del pago');
+                console.error('❌ Datos completos del pago:', JSON.stringify(paymentData, null, 2));
               }
               break;
               

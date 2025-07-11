@@ -50,35 +50,6 @@ app.use('/ai', aiRoutes);
 app.use('/estadisticas', estadisticasRoutes);
 app.post('/webhook/mercadopago', mercadoPagoWebhook);
 
-// Endpoint temporal para activar manualmente membresía
-app.post('/admin/activar-membresia/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { paymentId } = req.body;
-        
-        console.log(`🔧 Activación manual de membresía para establecimiento ${id} con payment ${paymentId || 'manual'}`);
-        
-        const EstablecimientoService = (await import('./services/EstablecimientoService/establecimientoService')).default;
-        
-        const resultado = await EstablecimientoService.activarMembresiaPorPago(
-            parseInt(id), 
-            paymentId || 'manual_activation'
-        );
-        
-        res.json({
-            success: true,
-            message: 'Membresía activada manualmente',
-            data: resultado
-        });
-    } catch (error: any) {
-        console.error('Error activando membresía manualmente:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error al activar membresía',
-            error: error.message
-        });
-    }
-});
 
 const port = process.env.PORT || 10101;
 

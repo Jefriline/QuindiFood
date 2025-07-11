@@ -614,12 +614,6 @@ class EstablecimientoRepository {
                 throw new Error('No se encontró establecimiento para activar membresía');
             }
             
-            // Opcional: guardar el payment_id en el establecimiento para referencia
-            await client.query(
-                `UPDATE establecimiento SET payment_id = $1 WHERE id_establecimiento = $2`,
-                [paymentId, idEstablecimiento]
-            );
-            
             await client.query('COMMIT');
             
             console.log(`✅ Membresía activada para establecimiento ${idEstablecimiento} con payment ${paymentId}`);
