@@ -148,7 +148,7 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
         // Estado de membresía por defecto: Inactivo (gratuito)
         let estadoMembresia = 'Inactivo';
         if (plan === 'premium') {
-            estadoMembresia = 'Pendiente de Pago'; // NO activar hasta que pague
+            estadoMembresia = 'Inactivo'; // Mantener inactivo hasta que se procese el pago
         }
         const estadoMembresiaDto = new EstadoMembresiaDto(estadoMembresia);
 
@@ -250,11 +250,12 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
                             id_establecimiento: resultado.id_establecimiento,
                             nombre_establecimiento,
                             estado: 'Pendiente',
-                            estado_membresia: 'Pendiente de Pago',
+                            estado_membresia: 'Inactivo',
                             fotos_subidas: fotosUrls.length,
                             documentos_subidos: Object.keys(documentosUrls).length,
                             precio_mensual: 35000,
-                            moneda: 'COP'
+                            moneda: 'COP',
+                            nota: 'La membresía premium se activará después del pago exitoso'
                         }
                     });
                 } else {
