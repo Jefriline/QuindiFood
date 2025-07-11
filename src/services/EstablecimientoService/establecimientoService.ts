@@ -156,6 +156,60 @@ export class EstablecimientoService {
             throw error;
         }
     }
+
+    static async obtenerPorUsuario(idUsuario: number) {
+        try {
+            console.log(`Obteniendo establecimiento por usuario ID: ${idUsuario}`);
+            const establecimiento = await EstablecimientoRepository.obtenerPorUsuario(idUsuario);
+            return establecimiento;
+        } catch (error) {
+            console.error('Error en el servicio al obtener establecimiento por usuario:', error);
+            throw error;
+        }
+    }
+
+    static async actualizarEstadoMembresia(idEstablecimiento: number, nuevoEstado: string) {
+        try {
+            console.log(`Actualizando estado de membresía para establecimiento ID: ${idEstablecimiento} a: ${nuevoEstado}`);
+            const resultado = await EstablecimientoRepository.actualizarEstadoMembresia(idEstablecimiento, nuevoEstado);
+            
+            // Si se cancela la suscripción premium, sincronizar horarios
+            if (nuevoEstado === 'Inactivo') {
+                await this.sincronizarHorariosCancelacion(idEstablecimiento);
+            }
+            
+            console.log('Estado de membresía actualizado exitosamente');
+            return resultado;
+        } catch (error) {
+            console.error('Error en el servicio al actualizar estado de membresía:', error);
+            throw error;
+        }
+    }
+
+    static async sincronizarHorariosCancelacion(idEstablecimiento: number) {
+        try {
+            console.log(`Sincronizando horarios después de cancelación premium para establecimiento ID: ${idEstablecimiento}`);
+            
+            // Obtener los horarios actuales y el estado de membresía actualizado
+            const establecimiento = await EstablecimientoRepository.obtenerEstablecimientoCompleto(idEstablecimiento);
+            
+            if (establecimiento) {
+                console.log('Horarios sincronizados correctamente con estado_membresia:', establecimiento.estado_membresia);
+                console.log('ID estado membresía:', establecimiento.id_estado_membresia);
+                return {
+                    success: true,
+                    horarios_sincronizados: establecimiento.horarios || [],
+                    estado_membresia: establecimiento.estado_membresia,
+                    id_estado_membresia: establecimiento.id_estado_membresia
+                };
+            }
+            
+            return { success: false, message: 'No se pudo sincronizar los horarios' };
+        } catch (error) {
+            console.error('Error al sincronizar horarios después de cancelación:', error);
+            throw error;
+        }
+    }
 }
 
 export default EstablecimientoService; 

@@ -21,6 +21,7 @@ import { Request, Response, NextFunction } from 'express';
 import simpleUserId from '../../middleware/UserValidator/simpleUserId';
 import { trackEstablecimientoAccess } from '../../middleware/ActivityTracker/activityTrackerMiddleware';
 import simpleUserIdOptional from '../../middleware/UserValidator/simpleUserIdOptional';
+import cancelarSuscripcion from '../../controllers/EstablecimientoController/cancelarSuscripcionController';
 
 const router = express.Router();
 
@@ -102,5 +103,8 @@ router.put('/editar/establecimiento', verifyToken, simpleUserId, onlyPropietario
 router.delete('/eliminar/establecimiento/:id', verifyToken, verifyRole(['ADMIN']), eliminarEstablecimientoAdmin);
 // Eliminar establecimiento (propietario)
 router.delete('/eliminar/mi-establecimiento/:id', verifyToken, eliminarEstablecimientoPropietario);
+
+// Cancelar suscripción premium
+router.put('/cancelar-suscripcion', verifyToken, simpleUserId, onlyPropietario, cancelarSuscripcion);
 
 export default router; 

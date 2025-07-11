@@ -606,6 +606,115 @@ class EstablecimientoRepository {
         );
         return { id_establecimiento: idEstablecimiento, preapproval_id: preapprovalId };
     }
+
+    static async obtenerPorUsuario(idUsuario: number) {
+        try {
+            const sql = `
+                SELECT 
+                    e.id_establecimiento,
+                    e.nombre_establecimiento,
+                    e.estado,
+                    e.FK_id_usuario,
+                    em.estado as estado_membresia,
+                    em.id_estado_membresia,
+                    e.preapproval_id
+                FROM establecimiento e
+                LEFT JOIN estado_membresia em ON e.id_establecimiento = em.FK_id_establecimiento
+                WHERE e.FK_id_usuario = $1
+            `;
+            
+            const result = await db.query(sql, [idUsuario]);
+            return result.rows[0] || null;
+        } catch (error) {
+            console.error('Error al obtener establecimiento por usuario:', error);
+            throw error;
+        }
+    }
+
+    static async obtenerEstablecimientoCompleto(idEstablecimiento: number) {
+        try {
+            const sql = `
+                SELECT 
+                    e.id_establecimiento,
+                    e.nombre_establecimiento,
+                    e.estado,
+                    e.FK_id_usuario,
+                    em.estado as estado_membresia,
+                    em.id_estado_membresia,
+                    e.preapproval_id,
+                    COALESCE(h.horarios_array, '[]'::json) as horarios
+                FROM establecimiento e
+                LEFT JOIN estado_membresia em ON e.id_establecimiento = em.FK_id_establecimiento
+                LEFT JOIN (
+                    SELECT 
+                        id_establecimiento,
+                        json_agg(
+                            json_build_object(
+                                'dia_semana', dia_semana,
+                                'hora_apertura', hora_apertura,
+                                'hora_cierre', hora_cierre
+                            )
+                        ) as horarios_array
+                    FROM horario_establecimiento
+                    GROUP BY id_establecimiento
+                ) h ON e.id_establecimiento = h.id_establecimiento
+                WHERE e.id_establecimiento = $1
+            `;
+            
+            const result = await db.query(sql, [idEstablecimiento]);
+            return result.rows[0] || null;
+        } catch (error) {
+            console.error('Error al obtener establecimiento completo:', error);
+            throw error;
+        }
+    }
+
+    static async actualizarEstadoMembresia(idEstablecimiento: number, nuevoEstado: string) {
+        const client = await db.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // Actualizar estado_membresia
+            const result = await client.query(
+                `UPDATE estado_membresia 
+                 SET estado = $1 
+                 WHERE FK_id_establecimiento = $2 
+                 RETURNING id_estado_membresia`,
+                [nuevoEstado, idEstablecimiento]
+            );
+            
+            if (result.rowCount === 0) {
+                throw new Error('No se encontró registro de membresía para el establecimiento');
+            }
+            
+            const id_estado_membresia = result.rows[0].id_estado_membresia;
+            
+            // Si se cancela la suscripción (Inactivo), limpiar preapproval_id
+            if (nuevoEstado === 'Inactivo') {
+                await client.query(
+                    `UPDATE establecimiento 
+                     SET preapproval_id = NULL 
+                     WHERE id_establecimiento = $1`,
+                    [idEstablecimiento]
+                );
+            }
+            
+            await client.query('COMMIT');
+            
+            return {
+                success: true,
+                estado_membresia: nuevoEstado,
+                id_estado_membresia: id_estado_membresia
+            };
+            
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Error al actualizar estado de membresía:', error);
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
 }
 
 export default EstablecimientoRepository; 

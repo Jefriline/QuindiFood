@@ -6,7 +6,11 @@
     "start": "node dist/app.js",
     "build": "tsc",
     "dev": "concurrently \"npm run watch\" \"nodemon dist/app.js\"",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "test-mercadopago": "node src/scripts/probarMercadoPago.js",
+    "diagnosticar-mercadopago": "node src/scripts/diagnosticarMercadoPago.js",
+    "crear-plan-suscripcion": "node src/scripts/crearPlanSuscripcion.js",
+    "probar-flujo-completo": "node src/scripts/probarFlujoCompleto.js"
   },
   "dependencies": {
     "@azure/communication-email": "^1.0.0",

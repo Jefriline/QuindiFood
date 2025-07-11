@@ -5,10 +5,11 @@ import { DocumentacionDto } from '../../Dto/EstablecimientoDto/documentacionDto'
 import { EstadoMembresiaDto } from '../../Dto/EstablecimientoDto/estadoMembresiaDto';
 import EstablecimientoService from '../../services/EstablecimientoService/establecimientoService';
 import { BlobServiceClient, BlobSASPermissions } from '@azure/storage-blob';
-import fetch from 'node-fetch';
 import UserService from '../../services/userServices/UserService';
+import { createSubscriptionWithPlan, mercadoPagoConfig } from '../../config/mercadopago-config';
 
-const PLAN_ID_PREMIUM = '2c93808497e081eb0197e9430c64038c'; // ID generado por Mercado Pago
+// Plan ID de suscripción premium (obtenido del script crear-plan-suscripcion)
+const PLAN_ID_PREMIUM = '2c93808497e081eb0197e8e83f4d0380';
 
 const registerEstablecimiento = async (req: Request, res: Response) => {
     try {
@@ -183,65 +184,161 @@ const registerEstablecimiento = async (req: Request, res: Response) => {
 
         // Si es premium, crear la suscripción en Mercado Pago y devolver el init_point
         if (plan === 'premium') {
-            // Obtener email del usuario autenticado por su id
-            const userEmail = await UserService.getEmailById(FK_id_usuario);
             try {
-                const isTest = 'true'; 
+                console.log('🔄 Iniciando proceso de suscripción premium...');
+                
+                const userEmail = await UserService.getEmailById(FK_id_usuario);
+                console.log('📧 Email del usuario obtenido:', userEmail);
+                
+                if (!userEmail) {
+                    throw new Error('No se pudo obtener el email del usuario');
+                }
 
-                const payer_email = isTest
-                    ? 'TESTUSER923920023@testuser.com' // correo de prueba comprador Mercado Pago
-                    : userEmail; // correo real del usuario
+                // Email para pruebas o real
+                const payer_email = mercadoPagoConfig.isTest
+                    ? 'TESTUSER923920023@testuser.com' // Email de cuenta de prueba
+                    : userEmail;
 
-                const response = await fetch('https://api.mercadopago.com/preapproval', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${process.env.ACCESS_TOKEN_MERCADOPAGO}`
-                    },
-                    body: JSON.stringify({
-                        payer_email,
-                        back_url: "https://type-mega-win-enquiry.trycloudflare.com/registro-exitoso",
-                        reason: 'Membresía Premium QuindiFood',
-                        auto_recurring: {
-                            frequency: 1,
-                            frequency_type: "months",
-                            transaction_amount: 35000, // o el valor de tu membresía
-                            currency_id: "COP"
-                        }
-                    })
+                console.log('🔧 Configuración Mercado Pago:', {
+                    payer_email,
+                    isTest: mercadoPagoConfig.isTest,
+                    hasToken: !!mercadoPagoConfig.accessToken,
+                    planId: PLAN_ID_PREMIUM
                 });
-                const data = await response.json();
-                console.log('Respuesta Mercado Pago preapproval:', data);
-                if (response.ok && data.init_point && data.id) {
+
+                // Verificar que tenemos un Plan ID
+                if (!PLAN_ID_PREMIUM) {
+                    console.error('❌ MERCADOPAGO_PLAN_ID no está configurado');
+                    throw new Error('Plan de suscripción no configurado');
+                }
+
+                // Datos para la suscripción usando el Plan ID
+                const subscriptionData = {
+                    preapproval_plan_id: PLAN_ID_PREMIUM,
+                    reason: `Membresía Premium QuindiFood - ${nombre_establecimiento}`,
+                    external_reference: `est_${resultado.id_establecimiento}_premium_${Date.now()}`,
+                    payer_email,
+                    back_url: `${mercadoPagoConfig.frontendUrl}/registro-exitoso`,
+                    // Para suscripciones con plan, no necesitamos auto_recurring
+                    // La configuración viene del plan
+                };
+
+                console.log('📤 Creando suscripción con Plan ID:', JSON.stringify(subscriptionData, null, 2));
+
+                // Crear suscripción usando fetch directo (más confiable)
+                const result = await createSubscriptionWithPlan(subscriptionData);
+                
+                console.log('🔄 Resultado de suscripción:', {
+                    success: result.success,
+                    hasInitPoint: result.success && !!result.data?.init_point,
+                    status: result.success ? result.data?.status : result.status
+                });
+
+                if (result.success && result.data?.init_point && result.data?.id) {
                     // Asociar el preapproval_id al establecimiento
-                    await EstablecimientoService.asociarPreapprovalId(resultado.id_establecimiento, data.id);
+                    console.log('🔗 Asociando preapproval_id:', result.data.id, 'al establecimiento:', resultado.id_establecimiento);
+                    await EstablecimientoService.asociarPreapprovalId(resultado.id_establecimiento, result.data.id);
+                    
                     return res.status(201).json({
                         success: true,
-                        message: 'Tu solicitud de establecimiento está en revisión. Pronto recibirás una respuesta del equipo de QuindiFood.',
-                        init_point: data.init_point,
+                        message: 'Tu solicitud de establecimiento está en revisión. Completa el pago para activar tu membresía premium.',
+                        init_point: result.data.init_point,
+                        preapproval_id: result.data.id,
+                        payment_type: 'subscription',
                         data: {
                             id_establecimiento: resultado.id_establecimiento,
                             nombre_establecimiento,
                             estado: 'Pendiente',
-                            estado_membresia: 'Activo',
+                            estado_membresia: 'Pendiente de Pago',
                             fotos_subidas: fotosUrls.length,
-                            documentos_subidos: Object.keys(documentosUrls).length
+                            documentos_subidos: Object.keys(documentosUrls).length,
+                            precio_mensual: 25000, // Actualizado según el plan
+                            moneda: 'COP',
+                            plan_id: PLAN_ID_PREMIUM
                         }
                     });
                 } else {
-                    // Si falla la creación de la suscripción, eliminar el registro creado
-                    await EstablecimientoService.eliminarEstablecimientoCompleto(resultado.id_establecimiento, FK_id_usuario, false);
-                    return res.status(500).json({
-                        success: false,
-                        message: 'No se pudo iniciar el proceso de pago premium. Intenta de nuevo o contacta soporte.'
+                    console.error('❌ Error en suscripción:', result);
+                    
+                    // Si la suscripción falla, intentar con preferencia simple como fallback
+                    console.log('🔄 Intentando fallback con preferencia simple...');
+                    
+                    const fetch = (await import('node-fetch')).default;
+                    const preferenceData = {
+                        items: [{
+                            title: 'Membresía Premium QuindiFood - Primer Mes',
+                            description: `Acceso premium para ${nombre_establecimiento}`,
+                            quantity: 1,
+                            unit_price: 25000, // Precio actualizado
+                            currency_id: 'COP'
+                        }],
+                        payer: {
+                            email: payer_email
+                        },
+                        back_urls: {
+                            success: `${mercadoPagoConfig.frontendUrl}/registro-exitoso`,
+                            failure: `${mercadoPagoConfig.frontendUrl}/registro-error`,
+                            pending: `${mercadoPagoConfig.frontendUrl}/registro-pendiente`
+                        },
+                        auto_return: 'approved',
+                        external_reference: `est_${resultado.id_establecimiento}_premium_fallback`,
+                        notification_url: `${mercadoPagoConfig.backendUrl}/webhook/mercadopago`
+                    };
+
+                    const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${mercadoPagoConfig.accessToken}`
+                        },
+                        body: JSON.stringify(preferenceData)
                     });
+
+                    const fallbackData = await response.json();
+
+                    if (response.ok && fallbackData.init_point && fallbackData.id) {
+                        console.log('✅ Fallback con preferencia exitoso');
+                        
+                        // Guardar el preference_id
+                        await EstablecimientoService.asociarPreapprovalId(resultado.id_establecimiento, fallbackData.id);
+                        
+                        return res.status(201).json({
+                            success: true,
+                            message: 'Tu solicitud de establecimiento está en revisión. Completa el pago para activar tu membresía premium.',
+                            init_point: fallbackData.init_point,
+                            preference_id: fallbackData.id,
+                            payment_type: 'simple',
+                            data: {
+                                id_establecimiento: resultado.id_establecimiento,
+                                nombre_establecimiento,
+                                estado: 'Pendiente',
+                                estado_membresia: 'Pendiente de Pago',
+                                fotos_subidas: fotosUrls.length,
+                                documentos_subidos: Object.keys(documentosUrls).length,
+                                precio_mensual: 25000,
+                                moneda: 'COP'
+                            }
+                        });
+                    } else {
+                        console.error('❌ Fallback también falló:', fallbackData);
+                        throw new Error('No se pudo crear ni suscripción ni preferencia de pago');
+                    }
                 }
-            } catch (error) {
+            } catch (error: any) {
+                console.error('❌ Error completo en proceso premium:', error);
+                
                 // Si ocurre un error, eliminar el registro creado
-                await EstablecimientoService.eliminarEstablecimientoCompleto(resultado.id_establecimiento, FK_id_usuario, false);
+                try {
+                    await EstablecimientoService.eliminarEstablecimientoCompleto(resultado.id_establecimiento, FK_id_usuario, false);
+                } catch (cleanupError) {
+                    console.error('❌ Error adicional al limpiar registro:', cleanupError);
+                }
+                
+                const errorMessage = error.message || 'Error desconocido al procesar el pago';
+                
                 return res.status(500).json({
                     success: false,
-                    message: 'No se pudo iniciar el proceso de pago premium. Intenta de nuevo o contacta soporte.'
+                    message: `No se pudo iniciar el proceso de pago premium: ${errorMessage}. Verifica tus datos e intenta de nuevo.`
                 });
             }
         }
