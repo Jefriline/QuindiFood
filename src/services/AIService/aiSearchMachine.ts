@@ -273,6 +273,9 @@ export class AISearchMachine {
 
   // Análisis semántico ultra-completo
   private async analizarSemanticaCompleta(prompt: string, history: any[]): Promise<any> {
+    // 🧹 LIMPIAR TF-IDF para cada nueva búsqueda
+    this.tfidf = new natural.TfIdf();
+    
     const promptLower = prompt.toLowerCase();
     
     // Tokenización avanzada
@@ -644,17 +647,76 @@ export class AISearchMachine {
 
   // Búsqueda por patrones de intención
   private busquedaPorPatrones(analisis: any): any {
-    let productos = [...this.productosCache];
-    let establecimientos = [...this.establecimientosCache];
+    // 🔧 NO incluir todos los productos automáticamente
+    // Solo buscar productos que realmente coincidan con las palabras clave
+    const productos: any[] = [];
+    const establecimientos: any[] = [];
     
-    // Filtrar por calidad si se requiere
-    if (analisis.scores.filtro_calidad > 0) {
-      productos = productos.filter((p: any) => (p.calificacion_promedio && parseFloat(p.calificacion_promedio) >= 3.5) || p.score_relevancia > 0.7);
-      establecimientos = establecimientos.filter((e: any) => (e.calificacion_promedio && parseFloat(e.calificacion_promedio) >= 3.5) || e.score_relevancia > 0.7);
+    console.log(`🎯 Búsqueda por patrones - palabras clave: ${analisis.palabrasClave.join(', ')}`);
+    
+    // Filtrar productos que contengan las palabras clave de la búsqueda
+    for (const producto of this.productosCache) {
+      let score = 0;
+      let coincidencias = 0;
+      
+      for (const palabra of analisis.palabrasClave) {
+        if (palabra.length <= 2) continue; // Saltar palabras muy cortas
+        
+        const palabraLower = palabra.toLowerCase();
+        const textoCompleto = producto.texto_busqueda_completo;
+        
+        if (textoCompleto.includes(palabraLower)) {
+          score += 0.6;
+          coincidencias++;
+        }
+      }
+      
+      // Solo incluir productos que tengan alguna coincidencia real
+      if (coincidencias > 0) {
+        // Aplicar filtros de calidad si se requiere
+        if (analisis.scores.filtro_calidad > 0) {
+          if (producto.calificacion_promedio && parseFloat(producto.calificacion_promedio) >= 3.5) {
+            score += 0.2; // Bonus por calidad
+          }
+        }
+        
+        productos.push({ ...producto, search_score: score });
+      }
     }
     
-    // Ordenar por precio si se requiere
-    if (analisis.scores.filtro_precio > 0) {
+    // Filtrar establecimientos que contengan las palabras clave
+    for (const establecimiento of this.establecimientosCache) {
+      let score = 0;
+      let coincidencias = 0;
+      
+      for (const palabra of analisis.palabrasClave) {
+        if (palabra.length <= 2) continue;
+        
+        const palabraLower = palabra.toLowerCase();
+        const textoCompleto = establecimiento.texto_busqueda_completo;
+        
+        if (textoCompleto.includes(palabraLower)) {
+          score += 0.6;
+          coincidencias++;
+        }
+      }
+      
+      // Solo incluir establecimientos que tengan alguna coincidencia real
+      if (coincidencias > 0) {
+        if (analisis.scores.filtro_calidad > 0) {
+          if (establecimiento.calificacion_promedio && parseFloat(establecimiento.calificacion_promedio) >= 3.5) {
+            score += 0.2;
+          }
+        }
+        
+        establecimientos.push({ ...establecimiento, search_score: score });
+      }
+    }
+    
+    console.log(`🎯 Patrones encontró ${productos.length} productos y ${establecimientos.length} establecimientos con coincidencias`);
+    
+    // Ordenar por precio si se requiere (solo los productos que ya coinciden)
+    if (analisis.scores.filtro_precio > 0 && productos.length > 0) {
       if (analisis.tokens.some((t: string) => ['barato', 'económico', 'bajo'].includes(t))) {
         productos.sort((a: any, b: any) => parseFloat(a.precio) - parseFloat(b.precio));
       } else if (analisis.tokens.some((t: string) => ['caro', 'premium', 'alto'].includes(t))) {
@@ -662,10 +724,7 @@ export class AISearchMachine {
       }
     }
     
-    return {
-      productos: productos.map((p: any) => ({ ...p, search_score: 0.6 })),
-      establecimientos: establecimientos.map((e: any) => ({ ...e, search_score: 0.6 }))
-    };
+    return { productos, establecimientos };
   }
 
   // Combinar resultados con pesos
@@ -705,6 +764,14 @@ export class AISearchMachine {
     
     console.log(`✅ Resultados combinados: ${resultado.length} productos únicos`);
     
+    // 🔍 DEBUG: Mostrar los primeros resultados combinados
+    console.log(`🔍 TOP 5 resultados combinados:`);
+    resultado.slice(0, 5).forEach((item: any, index: number) => {
+      const id = item.id_producto || item.id_establecimiento;
+      const nombre = item.nombre || item.nombre_establecimiento;
+      console.log(`   ${index + 1}. ID ${id}: ${nombre} (score: ${item.search_score.toFixed(2)})`);
+    });
+    
     return resultado;
   }
 
@@ -718,28 +785,39 @@ export class AISearchMachine {
     // 🔥 FILTRO MÁS ESTRICTO PARA BÚSQUEDAS ESPECÍFICAS
     const palabrasImportantes = analisis.palabrasClave.filter((p: string) => p.length > 2);
     
-    // Si hay palabras específicas, filtrar productos que realmente las contengan
+    // 🔥 FILTRO MÁS ESTRICTO: Solo productos que coincidan con palabras importantes
     if (palabrasImportantes.length > 0) {
       filtered = filtered.filter((p: any) => {
-        let tieneCoincidencia = false;
+        let coincidenciasEncontradas = 0;
         
         for (const palabra of palabrasImportantes) {
           const palabraLower = palabra.toLowerCase();
+          const palabraNormalizada = quitarTildes(palabraLower);
           
-          // Verificar si el producto realmente contiene esta palabra
+          // Verificar coincidencias en múltiples campos (con y sin tildes)
+          const nombreNormalizado = quitarTildes(p.nombre.toLowerCase());
+          const descripcionNormalizada = p.descripcion ? quitarTildes(p.descripcion.toLowerCase()) : '';
+          const categoriaNormalizada = quitarTildes(p.categoria_producto.toLowerCase());
+          const establecimientoNormalizado = quitarTildes(p.nombre_establecimiento.toLowerCase());
+          
           if (p.nombre.toLowerCase().includes(palabraLower) ||
+              nombreNormalizado.includes(palabraNormalizada) ||
               (p.descripcion && p.descripcion.toLowerCase().includes(palabraLower)) ||
+              descripcionNormalizada.includes(palabraNormalizada) ||
               p.categoria_producto.toLowerCase().includes(palabraLower) ||
-              p.nombre_establecimiento.toLowerCase().includes(palabraLower)) {
-            tieneCoincidencia = true;
-            break;
+              categoriaNormalizada.includes(palabraNormalizada) ||
+              p.nombre_establecimiento.toLowerCase().includes(palabraLower) ||
+              establecimientoNormalizado.includes(palabraNormalizada)) {
+            coincidenciasEncontradas++;
           }
         }
         
-        return tieneCoincidencia;
+        // 🎯 FILTRO MÁS ESTRICTO: Requiere al menos 1 coincidencia para búsquedas específicas
+        const umbralCoincidencias = palabrasImportantes.length <= 2 ? 1 : Math.ceil(palabrasImportantes.length * 0.5);
+        return coincidenciasEncontradas >= umbralCoincidencias;
       });
       
-      console.log(`📊 Después de filtro por palabras específicas: ${filtered.length}`);
+      console.log(`📊 Después de filtro por palabras específicas (umbral: ${palabrasImportantes.length <= 2 ? 1 : Math.ceil(palabrasImportantes.length * 0.5)}): ${filtered.length}`);
     }
     
     // Filtro de relevancia mínima - más inclusivo para búsquedas específicas
@@ -747,12 +825,64 @@ export class AISearchMachine {
     
     console.log(`📊 Después de filtro por score: ${filtered.length}`);
     
-    // 🔍 DEBUG: Log de productos antes del filtro
-    if (filtered.length > 0) {
-      console.log(`📊 Productos filtrados encontrados:`);
-      filtered.slice(0, 5).forEach((p: any) => {
-        console.log(`   ID ${p.id_producto}: ${p.nombre} (score: ${p.search_score.toFixed(2)})`);
-      });
+    // 🚨 FILTRO ANTI-CONTAMINACIÓN: Detectar productos completamente no relacionados
+    if (palabrasImportantes.length > 0) {
+      const palabrasBusqueda = palabrasImportantes.map((p: string) => p.toLowerCase());
+      
+      // Definir categorías problemáticas que NO deben mezclarse
+      const categoriasConflictivas = {
+        te_japones: ['té', 'te', 'japonés', 'japones', 'verde'],
+        helados: ['helado', 'helados', 'ice', 'cream'],
+        parrilla: ['parrilla', 'asado', 'carne', 'brasileño', 'picanha', 'churrasco'],
+        bebidas: ['bebida', 'jugo', 'smoothie', 'batido'],
+        postres: ['postre', 'dulce', 'torta', 'cake']
+      };
+      
+      // Detectar qué categoría se está buscando
+      let categoriaBuscada = null;
+      for (const [categoria, palabras] of Object.entries(categoriasConflictivas)) {
+        if (palabras.some((palabra: string) => palabrasBusqueda.includes(palabra))) {
+          categoriaBuscada = categoria;
+          break;
+        }
+      }
+      
+      if (categoriaBuscada) {
+        console.log(`🎯 Categoría detectada en búsqueda: ${categoriaBuscada}`);
+        
+        // Filtrar productos que NO pertenezcan a categorías conflictivas
+        const productosAntesFilter = filtered.length;
+        
+        filtered = filtered.filter((p: any) => {
+          const textoProducto = `${p.nombre} ${p.descripcion || ''} ${p.categoria_producto}`.toLowerCase();
+          
+          // Si busca té, NO mostrar helados, parrillas, etc.
+          if (categoriaBuscada === 'te_japones') {
+            return !textoProducto.includes('helado') && 
+                   !textoProducto.includes('parrilla') && 
+                   !textoProducto.includes('carne') &&
+                   !textoProducto.includes('asado');
+          }
+          
+          // Si busca helados, NO mostrar té, parrillas, etc.
+          if (categoriaBuscada === 'helados') {
+            return !textoProducto.includes('té') && 
+                   !textoProducto.includes('parrilla') && 
+                   !textoProducto.includes('asado');
+          }
+          
+          // Si busca parrilla, NO mostrar té, helados, etc.
+          if (categoriaBuscada === 'parrilla') {
+            return !textoProducto.includes('té') && 
+                   !textoProducto.includes('helado') &&
+                   !textoProducto.includes('smoothie');
+          }
+          
+          return true; // Permitir otros productos
+        });
+        
+        console.log(`🧹 Filtro anti-contaminación: ${productosAntesFilter} → ${filtered.length} productos`);
+      }
     }
     
     // Buscar específicamente productos problemáticos (como helado en búsqueda de té)
