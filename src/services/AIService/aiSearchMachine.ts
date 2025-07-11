@@ -476,7 +476,7 @@ export class AISearchMachine {
       }
       
       // 🍪 BONUS ESPECÍFICOS PARA CASOS COMUNES
-      const palabrasEspeciales = palabrasClave.filter(p => 
+      const palabrasEspeciales = palabrasClave.filter((p: string) => 
         ['cookies', 'cream', 'galleta', 'chocolate', 'vainilla', 'trozos'].includes(p.toLowerCase())
       );
       
@@ -691,7 +691,7 @@ export class AISearchMachine {
     // Buscar específicamente productos problemáticos (como helado en búsqueda de té)
     const productosNoRelacionados = filtered.filter((p: any) => {
       // Si buscan "té" pero aparece "helado", es problemático
-      const buscaTe = palabrasImportantes.some(palabra => 
+      const buscaTe = palabrasImportantes.some((palabra: string) => 
         palabra.toLowerCase().includes('te') || palabra.toLowerCase().includes('japonés')
       );
       const esHelado = p.nombre.toLowerCase().includes('helado') || 
