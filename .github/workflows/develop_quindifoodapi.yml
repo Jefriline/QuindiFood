@@ -85,9 +85,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_6D4EEF2D0E8E412AB252FB3ED190497E }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F91FAF778AE342D9AA0A227A9819719A }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C44D251633274A278678C70DDDCCFE0F }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTI }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTI }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONI }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -96,3 +96,4 @@ jobs:
           app-name: 'quindifoodapi'
           slot-name: 'Production'
           package: .
+
